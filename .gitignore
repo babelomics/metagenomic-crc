@@ -132,3 +132,4 @@ dmypy.json
 .vscode/
 .venv/
 data/
+notebooks_old/
