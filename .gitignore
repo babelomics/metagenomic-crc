@@ -133,3 +133,4 @@ dmypy.json
 .venv/
 data/
 notebooks_old/
+data.bk/
