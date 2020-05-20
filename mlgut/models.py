@@ -30,7 +30,7 @@ def get_model(profile: str) -> Pipeline:
         model = get_taxonomic_model()
     else:
         raise NotImplementedError
-    
+
     return model
 
 
@@ -43,11 +43,18 @@ def get_taxonomic_model() -> Pipeline:
         [description]
     """
 
-    model = Pipeline([
-            ('transformer', FunctionTransformer(np.log1p)),
+    model = Pipeline(
+        [
+            ("transformer", FunctionTransformer(np.log1p)),
             ("discretizer", KBinsDiscretizer(n_bins=4, encode="ordinal")),
             ("selector", SelectFpr()),
-            ("estimator", ExplainableBoostingClassifier(n_estimators=32, n_jobs=-1))
-        ]) 
+            (
+                "estimator",
+                ExplainableBoostingClassifier(
+                    n_estimators=32, n_jobs=-1, random_state=42
+                ),
+            ),
+        ]
+    )
 
     return model
