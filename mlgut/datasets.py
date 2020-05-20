@@ -3,7 +3,7 @@
 author: Carlos Loucera
 email: carlos.loucera@juntadeandalucia.es
 
-Data manipulation functions.
+Data manipulation module.
 """
 import json
 from pathlib import Path
@@ -99,7 +99,7 @@ def read_profile_frame(path: Path) -> pd.DataFrame:
     return df
 
 
-def build_features(metadata: pd.DataFrame, profiles=["KEGG_KOs", "centrifuge", "OGs"]):
+def build_features(metadata: pd.DataFrame, profiles=["KEGG_KOs", "centrifuge"]):
     """[summary]
 
     Parameters
@@ -178,6 +178,37 @@ def write_features(profile_dict: dict):
         fpath = PROCESSED_DATA_PATH.joinpath(fname)
         features = profile_dict[profile]
         features.to_csv(fpath, sep="\t", index_label="ENA-SAMPLE")
+
+
+def read_metadata():    
+    fname = 'metadata.tsv'
+    fpath = PROCESSED_DATA_PATH.joinpath(fname)
+    metadata = pd.read_csv(fpath, sep="\t", index_col=0)
+    
+    return metadata
+
+
+def build_condition_dataset(condition, profile_name="KEGG_KOs", batch=None):
+    
+    metadata = read_metadata()
+    
+    condition_query = metadata["DISEASE"] == condition
+    projects = metadata.loc[condition_query, "SECONDARY_STUDY_ID"].unique()
+    project_query = metadata["SECONDARY_STUDY_ID"].isin(projects)
+    
+    metadata = metadata.loc[project_query, :]
+    
+    if batch is None:
+        fname = f'{profile_name}.tsv'
+    else:
+        fname = f"{profile_name}_{batch}.tsv"
+    
+    fpath = PROCESSED_DATA_PATH.joinpath(fname)
+    features = pd.read_csv(fpath, sep="\t", index_col="ENA-SAMPLE")
+    
+    features = features.loc[project_query, :]
+    
+    return features, metadata
 
 
 if __name__ == "__main__":
