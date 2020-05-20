@@ -5,6 +5,7 @@ email: carlos.loucera@juntadeandalucia.es
 
 Train functions.
 """
+from mlgut.utils import get_path
 from sklearn.pipeline import Pipeline
 import pandas as pd
 from interpret.glassbox import ExplainableBoostingClassifier
@@ -29,6 +30,7 @@ SCORE_LIST = [
 
 DISEASE_COLUMN_NAME = "DISEASE"
 PROJECT_COLUMN_NAME = "SECONDARY_STUDY_ID"
+RESULTS_PATH = get_path("results")
 
 
 def perform_stability_analysis(
@@ -71,10 +73,10 @@ def perform_stability_analysis(
         [description]
     """
 
-    stability_results = {}
+    results = {}
 
     for project_id in metadata[PROJECT_COLUMN_NAME].unique():
-        stability_results[project_id] = {}
+        results[project_id] = {}
 
         project_query = metadata[PROJECT_COLUMN_NAME] == project_id
         condition_query = metadata[DISEASE_COLUMN_NAME].isin([condition, control])
@@ -99,12 +101,14 @@ def perform_stability_analysis(
             return_train_score=True,
             n_jobs=-1,
         )
-        stability_results[project_id] = res
+        results[project_id] = res
 
     if save:
-        joblib.dump(stability_results, f"{condition}_{profile}_stability.jbl")
+        fname = f"{condition}_{profile}_stability.jbl"
+        fpath = RESULTS_PATH.joinpath(fname)
+        joblib.dump(results, fpath)
 
-    return stability_results
+    return results
 
 
 def perform_crossproject_analysis(
@@ -167,7 +171,9 @@ def perform_crossproject_analysis(
         results[project_id]["cv"] = rescv
 
     if save:
-        joblib.dump(results, f"{condition}_{profile}_cross_project.jbl")
+        fname = f"{condition}_{profile}_cross_project.jbl"
+        fpath = RESULTS_PATH.joinpath(fname)
+        joblib.dump(results, fpath)
 
     return results
 
@@ -276,7 +282,9 @@ def perform_lopo_wo_oracle(
     )
 
     if save:
-        joblib.dump(results, f"{condition}_{profile}_lopo.jbl")
+        fname = f"{condition}_{profile}_lopo.jbl"
+        fpath = RESULTS_PATH.joinpath(fname)
+        joblib.dump(results, fpath)
 
     support_matrix = [
         pd.Series(model_["selector"].get_support(), index=X.columns)
@@ -355,6 +363,8 @@ def perform_lopo_with_oracle(
         results[i]["columns"] = query_cols
 
     if save:
-        joblib.dump(results, f"{condition}_{profile}_lopo_with_oracle.jbl")
+        fname = f"{condition}_{profile}_lopo_with_oracle.jbl"
+        fpath = RESULTS_PATH.joinpath(fname)
+        joblib.dump(results, fpath)
 
     return results
