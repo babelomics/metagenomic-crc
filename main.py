@@ -5,7 +5,7 @@ import random
 from mlgut import datasets
 from mlgut import train
 from mlgut import models
-
+import subprocess
 
 SEED = 42
 random.seed(SEED)
@@ -13,13 +13,30 @@ np.random.seed(SEED)
 
 
 def build_data_sources():
+    """[summary]
+    """
     metadata = datasets.build_metadata()
     metadata, features_dict = datasets.build_features(metadata)
     datasets.write_metadata(metadata)
     datasets.write_features(features_dict)
 
 
-def main(condition, profile_name, build_data=True):
+def main(condition, profile_name, build_data=True, sync=True):
+    """[summary]
+
+    Parameters
+    ----------
+    condition : [type]
+        [description]
+    profile_name : [type]
+        [description]
+    build_data : bool, optional
+        [description], by default True
+    sync : bool, optional
+        [description], by default True
+    """
+    if sync:
+        subprocess.run(["sh", "mlgut/sync_data.sh"])
     if build_data:
         build_data_sources()
 
@@ -27,6 +44,15 @@ def main(condition, profile_name, build_data=True):
 
 
 def train_interpreter(condition, profile_name):
+    """[summary]
+
+    Parameters
+    ----------
+    condition : [type]
+        [description]
+    profile_name : [type]
+        [description]
+    """
     features, metadata = datasets.build_condition_dataset(condition, profile_name)
     model = models.get_model(profile_name)
 
