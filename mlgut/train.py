@@ -17,6 +17,7 @@ from sklearn.model_selection import (
 )
 import joblib
 from typing import Tuple, Iterable
+from sklearn.base import clone
 
 
 SCORE_LIST = [
@@ -91,8 +92,10 @@ def perform_stability_analysis(
             n_splits=n_splits, train_size=n_examples, random_state=0
         )
 
+        model_ = clone(model)
+
         res = cross_validate(
-            model,
+            model_,
             X,
             y,
             cv=stability_cv,
@@ -120,11 +123,34 @@ def perform_crossproject_analysis(
     control="healthy",
     save=True,
 ) -> dict:
+    """[summary]
+
+    Parameters
+    ----------
+    features : pd.DataFrame
+        [description]
+    metadata : pd.DataFrame
+        [description]
+    model : Pipeline
+        [description]
+    profile : str
+        [description]
+    condition : str
+        [description]
+    control : str, optional
+        [description], by default "healthy"
+    save : bool, optional
+        [description], by default True
+
+    Returns
+    -------
+    dict
+        [description]
+    """
 
     query = metadata[DISEASE_COLUMN_NAME].isin([control, condition])
     X = features.loc[query, :]
     y = metadata.loc[query, DISEASE_COLUMN_NAME] == condition
-    g = metadata.loc[query, PROJECT_COLUMN_NAME]
 
     results = {}
     for project_id in metadata[PROJECT_COLUMN_NAME].unique():
@@ -143,9 +169,10 @@ def perform_crossproject_analysis(
         y_out = metadata[DISEASE_COLUMN_NAME][query_out]
         y_out = y_out == condition
 
-        model.fit(X, y)
-        results[project_id]["model"] = model
-        outer_score = model.predict_proba(X_out)[:, 1]
+        model_ = clone(model)
+        model_.fit(X, y)
+        results[project_id]["model"] = model_
+        outer_score = model_.predict_proba(X_out)[:, 1]
         outer_score = pd.Series(outer_score, index=X_out.index)
         outer_score.name = "decission"
 
@@ -157,8 +184,9 @@ def perform_crossproject_analysis(
             n_splits=10, n_repeats=20, random_state=0
         )
 
+        model_ = clone(model)
         rescv = cross_validate(
-            model,
+            model_,
             X,
             y,
             cv=inner_project_cv,
@@ -270,8 +298,9 @@ def perform_lopo_wo_oracle(
 
     splitter = LeaveOneGroupOut().split(X, y, groups=g)
 
+    model_ = clone(model)
     results = cross_validate(
-        model,
+        model_,
         X,
         y,
         cv=splitter,
@@ -287,8 +316,8 @@ def perform_lopo_wo_oracle(
         joblib.dump(results, fpath)
 
     support_matrix = [
-        pd.Series(model_["selector"].get_support(), index=X.columns)
-        for model_ in results["estimator"]
+        pd.Series(model__["selector"].get_support(), index=X.columns)
+        for model__ in results["estimator"]
     ]
 
     return results, support_matrix
@@ -347,10 +376,10 @@ def perform_lopo_with_oracle(
         X = features.loc[query, query_cols]
 
         splitter = LeaveOneGroupOut().split(X, y, groups=g)
-        model
+        model_ = clone(model)
 
         cv = cross_validate(
-            model,
+            model_,
             X,
             y,
             cv=splitter,
