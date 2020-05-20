@@ -19,11 +19,14 @@ def build_data_sources():
     datasets.write_features(features_dict)
 
 
-def main():
-    # build_data_sources()
-    condition = "CRC"
-    profile_name = "centrifuge"
+def main(condition, profile_name, build_data=True):
+    if build_data:
+        build_data_sources()
 
+    train_interpreter(condition, profile_name)
+
+
+def train_interpreter(condition, profile_name):
     features, metadata = datasets.build_condition_dataset(condition, profile_name)
     model = models.get_model(profile_name)
 
@@ -40,4 +43,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    condition = "CRC"
+    profile_name = "centrifuge"
+    main(condition, profile_name)
