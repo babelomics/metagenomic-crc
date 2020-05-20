@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-user_id=$1
-data_path=$2
-metadata_path=$3
-kegg_dict_file=$4
-is_ssh=$5
 
 file_folder=$(dirname "$0")
+project_folder="${file_folder}/.."
+dotenv_path="${project_folder}/.env"
+# Read .env file
+export $(egrep -v '^#' ${dotenv_path} | xargs)
+
 raw_data_folder="${file_folder}/../data/raw/"
 mkdir -p $raw_data_folder
 
@@ -16,13 +16,13 @@ target=${raw_data_folder}
 #TODO use secretes from .env
 rsync -r -a -v -e ssh $source $target
 
-source="cloucera@$data_path/centrifuge_samples_profiles"
+source="$user_id@$data_path/centrifuge_samples_profiles"
 target=${raw_data_folder}
 
 #TODO use secretes from .env
 rsync -r -a -v -e ssh $source $target
 
-source="cloucera@$metadata_path"
+source="$user_id@$metadata_path"
 target=${raw_data_folder}
 
 #TODO use secretes from .env
@@ -30,4 +30,4 @@ rsync -r -a -v -e ssh --prune-empty-dirs --include "*/" --include="*subset.tsv" 
 mv "${target}/machine_learning" "${target}/metadata"
 find "${target}/metadata" -type d -empty -delete
 
-scp cloucera@$kegg_dict_file $raw_data_folder
+scp $user_id@$kegg_dict_file $raw_data_folder
