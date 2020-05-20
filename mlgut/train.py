@@ -20,10 +20,11 @@ SCORE_LIST = [
 ]
 
 
-def perform_stability_selection(
+def perform_stability_analysis(
     features: pd.DataFrame,
     metadata: pd.DataFrame,
     model: Pipeline,
+    profile: str,
     condition: str,
     control="healthy",
     n_splits=100,
@@ -39,6 +40,8 @@ def perform_stability_selection(
     metadata : pd.DataFrame
         [description]
     model : Pipeline
+        [description]
+    profile : str
         [description]
     condition : str
         [description]
