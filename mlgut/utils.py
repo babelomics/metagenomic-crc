@@ -37,7 +37,7 @@ def get_path(which: str) -> Path:
     elif which.lower() == "raw":
         path = get_raw_path()
     elif which.lower() == "results":
-        path = get_results_path
+        path = get_results_path()
     else:
         raise NotImplementedError
 
