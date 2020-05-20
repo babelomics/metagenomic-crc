@@ -62,7 +62,10 @@ def get_processed_path() -> Path:
         [description]
     """
     project_path = get_project_path()
-    return project_path.joinpath("data", "processed")
+    path = project_path.joinpath("data", "processed")
+    path.mkdir(parents=True, exist_ok=True)
+
+    return path
 
 
 def get_raw_path() -> Path:
@@ -74,4 +77,7 @@ def get_raw_path() -> Path:
         [description]
     """
     project_path = get_project_path()
-    return project_path.joinpath("data", "raw")
+    path = project_path.joinpath("data", "raw")
+    path.mkdir(parents=True, exist_ok=True)
+
+    return path
