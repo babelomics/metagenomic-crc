@@ -36,6 +36,8 @@ def get_path(which: str) -> Path:
         path = get_processed_path()
     elif which.lower() == "raw":
         path = get_raw_path()
+    elif which.lower() == "results":
+        path = get_results_path
     else:
         raise NotImplementedError
 
@@ -78,6 +80,21 @@ def get_raw_path() -> Path:
     """
     project_path = get_project_path()
     path = project_path.joinpath("data", "raw")
+    path.mkdir(parents=True, exist_ok=True)
+
+    return path
+
+
+def get_results_path() -> Path:
+    """[summary]
+
+    Returns
+    -------
+    Path
+        [description]
+    """
+    project_path = get_project_path()
+    path = project_path.joinpath("data", "results")
     path.mkdir(parents=True, exist_ok=True)
 
     return path
