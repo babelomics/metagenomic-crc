@@ -6,6 +6,9 @@ from mlgut import datasets
 from mlgut import train
 from mlgut import models
 import subprocess
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+
 
 SEED = 42
 random.seed(SEED)
@@ -21,7 +24,7 @@ def build_data_sources():
     datasets.write_features(features_dict)
 
 
-def main(condition, profile_name, build_data=True, sync=True):
+def main(condition, profile_name, build_data=True, sync=True, debug=True):
     """[summary]
 
     Parameters
@@ -39,8 +42,18 @@ def main(condition, profile_name, build_data=True, sync=True):
         subprocess.run(["sh", "mlgut/sync_data.sh"])
     if build_data:
         build_data_sources()
+    if debug:
+        filter_warnings()
 
     train_interpreter(condition, profile_name)
+
+
+def filter_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    warnings.filterwarnings("ignore", category=UserWarning)
+    warnings.filterwarnings("ignore", category=ConvergenceWarning)
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
+    warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def train_interpreter(condition, profile_name):
@@ -53,16 +66,23 @@ def train_interpreter(condition, profile_name):
     profile_name : [type]
         [description]
     """
+    print(f"Building datasets for {condition} condition and profile {profile_name}")
     features, metadata = datasets.build_condition_dataset(condition, profile_name)
     model = models.get_model(profile_name)
 
+    print("\t Stability analysis.")
     train.perform_stability_analysis(features, metadata, model, profile_name, condition)
+
+    print("\t Cross-project analysis.")
     train.perform_crossproject_analysis(
         features, metadata, model, profile_name, condition
     )
 
+    print("\t LOPO analysis, no not ask the Oracle.")
     model_wo_sel = models.get_model(profile_name, selector=False)
     _, oracle = train.perform_lopo(features, metadata, model, profile_name, condition)
+
+    print("\t LOPO analysis, ask the Oracle.")
     train.perform_lopo(
         features, metadata, model_wo_sel, profile_name, condition, which_oracle=oracle
     )
@@ -71,4 +91,4 @@ def train_interpreter(condition, profile_name):
 if __name__ == "__main__":
     condition = "CRC"
     profile_name = "centrifuge"
-    main(condition, profile_name)
+    main(condition, profile_name, build_data=False, sync=False)
