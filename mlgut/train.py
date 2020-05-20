@@ -354,4 +354,7 @@ def perform_lopo_with_oracle(
         results[i]["cv"] = cv
         results[i]["columns"] = query_cols
 
+    if save:
+        joblib.dump(results, f"{condition}_{profile}_lopo_with_oracle.jbl")
+
     return results
