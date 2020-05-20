@@ -32,6 +32,12 @@ def main():
         features, metadata, model, profile_name, condition
     )
 
+    model_wo_sel = models.get_model(profile_name, selector=False)
+    _, oracle = train.perform_lopo(features, metadata, model, profile_name, condition)
+    train.perform_lopo(
+        features, metadata, model_wo_sel, profile_name, condition, which_oracle=oracle
+    )
+
 
 if __name__ == "__main__":
     main()
