@@ -34,7 +34,7 @@ def get_path(which: str) -> Path:
         path = get_project_path()
     elif which.lower() == "processed":
         path = get_processed_path()
-    elif which.lower():
+    elif which.lower() == "raw":
         path = get_raw_path()
     else:
         raise NotImplementedError
@@ -61,7 +61,8 @@ def get_processed_path() -> Path:
     Path
         [description]
     """
-    return DOTENV_FILE.joinpath("data", "processed")
+    project_path = get_project_path()
+    return project_path.joinpath("data", "processed")
 
 
 def get_raw_path() -> Path:
@@ -72,4 +73,5 @@ def get_raw_path() -> Path:
     Path
         [description]
     """
-    return DOTENV_FILE.joinpath("data", "raw")
+    project_path = get_project_path()
+    return project_path.joinpath("data", "raw")
