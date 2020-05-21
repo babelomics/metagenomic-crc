@@ -106,3 +106,6 @@ def get_ncbi() -> NCBITaxa:
     ncbi = NCBITaxa()
 
     return ncbi
+
+def rename_keys(d, keys):
+    return dict([(keys.get(k), v) for k, v in d.items()])
