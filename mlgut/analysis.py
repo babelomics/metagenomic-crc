@@ -10,11 +10,13 @@ import joblib
 import numpy as np
 from scipy import stats
 import mlgut.stability as stab
+from mlgut import utils
 from mlgut.datasets import get_path
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from mlgut.models import compute_rbo_mat, compute_support_ebm
+from mlgut.models import compute_rbo_mat, compute_support_ebm, get_lopo_support
+from sklearn.model_selection import LeaveOneGroupOut
 
 
 EXTENSIONS = ["pdf", "png", "svg"]
@@ -25,7 +27,6 @@ PROJECT_NAMES_DICT = {
     "PRJEB6070": "Zeller",
     "PRJEB7774": "Feng",
     "PRJEB10878": "Yu",
-    "PRJEB12449": "Vogtmann",
     "PRJNA447983": "Thomas0",
     "PRJEB27928": "Thomas1",
 }
@@ -40,8 +41,7 @@ def load_crossproject(condition, profile, path):
     crossproject_fname = f"{condition}_{profile}_cross_project.jbl"
     crossproject_fpath = path.joinpath(crossproject_fname)
     crossproject_results = joblib.load(crossproject_fpath)
-    for key in crossproject_results.keys():
-        crossproject_results[PROJECT_NAMES_DICT[key]] = crossproject_results.pop(key)
+    crossproject_results = utils.rename_keys(crossproject_results, PROJECT_NAMES_DICT)
 
     return crossproject_results
 
@@ -50,8 +50,7 @@ def load_stability(condition, profile, path):
     stability_fname = f"{condition}_{profile}_stability.jbl"
     stability_fpath = path.joinpath(stability_fname)
     stability_results = joblib.load(stability_fpath)
-    for key in stability_results.keys():
-        stability_results[PROJECT_NAMES_DICT[key]] = stability_results.pop(key)
+    stability_results = utils.rename_keys(stability_results, PROJECT_NAMES_DICT)
 
     return stability_results
 
@@ -123,6 +122,8 @@ def analyze_stability(features, metadata, profile, condition, path):
 
     plot_stability(crossproject_results_df, stability_results_df, path)
     plot_error(roc_auc_crossproject, roc_auc_stability, path)
+
+    return roc_auc_crossproject
 
 
 def plot_stability(cp_df, stab_df, path):
@@ -211,10 +212,99 @@ def analyze_rank_stability(features, metadata, profile, condition, path):
         plt.savefig(fpath, dpi=300, bbox_inches="tight", pad_inches=0)
 
 
-def build_analysis(features, metadata, profile, condition, path):
+def analyze_lopo_wo_oracle(features, metadata, profile, condition, control, path):
+    fname = f"{condition}_{profile}_lopo.jbl"
+    fpath = path.joinpath(fname)
+    results = joblib.load(fpath)
+
+    query = metadata[DISEASE_COLUMN_NAME].isin([control, condition])
+    projects = metadata.loc[query, PROJECT_COLUMN_NAME]
+
+    lopo_mean = dict(zip(np.unique(projects), results["test_roc_auc"]))
+    lopo_mean = utils.rename_keys(lopo_mean, PROJECT_NAMES_DICT)
+
+    support = get_lopo_support(results, features.columns)
+
+    print(lopo_mean, np.mean(results["test_roc_auc"]))
+
+    return lopo_mean, support
+
+
+def analyze_lopo_with_oracle(features, metadata, profile, condition, control, path):
+    fname = f"{condition}_{profile}_lopo_with_oracle.jbl"
+    fpath = path.joinpath(fname)
+    results = joblib.load(fpath)
+
+    query = metadata[DISEASE_COLUMN_NAME].isin([control, condition])
+    projects = metadata.loc[query, PROJECT_COLUMN_NAME]
+
+    best = 0.0
+    keep = {}
+    best_support = []
+    for i in results.keys():
+        # top: at least in `i` LOPO trainings.
+        lopo_mean_i = dict(zip(np.unique(projects), results[i]["cv"]["test_roc_auc"]))
+        mean_i = np.mean(results[i]["cv"]["test_roc_auc"])
+        lopo_mean_i = utils.rename_keys(lopo_mean_i, PROJECT_NAMES_DICT)
+        if mean_i > best:
+            best = mean_i
+            keep = lopo_mean_i
+            columns = results[i]["columns"]
+            best_support = get_lopo_support(results[i]["cv"], columns)
+
+        print(lopo_mean_i, mean_i)
+
+    return keep, best_support
+
+
+def plot_lopo(frame, support, profile, condition, path, oracle=True):
+    if oracle:
+        with_str = "with"
+    else:
+        with_str = "wo"
+
+    fname = f"{condition}_{profile}_lopo_{with_str} _oracle_support.tsv"
+    fpath = path.joinpath(fname)
+    support.to_csv(fpath, sep="\t")
+
+
+def get_cross_project_scores(features, metadata_, profile, condition, path):
+    results = load_crossproject(condition, profile, path)
+
+    cp_frame = {key: results[key]["cv"]["test_roc_auc"] for key in results.keys()}
+    cp_frame = pd.DataFrame(cp_frame)
+
+    outer_frame = 's'
+
+    return 1
+
+
+def build_analysis(features, metadata, profile, condition, control, path):
     metadata_ = metadata.copy()
     metadata_[PROJECT_COLUMN_NAME] = metadata_[PROJECT_COLUMN_NAME].replace(
         PROJECT_NAMES_DICT
     )
+
     analyze_stability(features, metadata_, profile, condition, path)
     analyze_rank_stability(features, metadata_, profile, condition, path)
+
+    lopo_wo_oracle, support_lopo_wo_oracle = analyze_lopo_wo_oracle(
+        features, metadata, profile, condition, control, path
+    )
+    lopo_with_oracle, support_lopo_with_oracle = analyze_lopo_with_oracle(
+        features, metadata, profile, condition, control, path
+    )
+
+    plot_lopo(
+        lopo_wo_oracle, support_lopo_wo_oracle, profile, condition, path, oracle=False
+    )
+    plot_lopo(
+        lopo_with_oracle,
+        support_lopo_with_oracle,
+        profile,
+        condition,
+        path,
+        oracle=True,
+    )
+
+    scores = get_cross_project_scores(features, metadata_, profile, condition, path)
