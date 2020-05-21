@@ -5,6 +5,8 @@ import random
 from mlgut import datasets
 from mlgut import train
 from mlgut import models
+from mlgut import analysis
+from mlgut import utils
 import subprocess
 import warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -71,20 +73,26 @@ def train_interpreter(condition, profile_name):
     model = models.get_model(profile_name)
 
     print("\t Stability analysis.")
-    train.perform_stability_analysis(features, metadata, model, profile_name, condition)
+    # train.perform_stability_analysis(features, metadata, model, profile_name, condition)
 
     print("\t Cross-project analysis.")
-    train.perform_crossproject_analysis(
-        features, metadata, model, profile_name, condition
-    )
+    # train.perform_crossproject_analysis(
+    #     features, metadata, model, profile_name, condition
+    # )
 
-    print("\t LOPO analysis, no not ask the Oracle.")
-    model_wo_sel = models.get_model(profile_name, selector=False)
-    _, oracle = train.perform_lopo(features, metadata, model, profile_name, condition)
+    print("\t LOPO analysis, do not ask the Oracle.")
+    # model_wo_sel = models.get_model(profile_name, selector=False)
+    # _, oracle = train.perform_lopo(features, metadata, model, profile_name, condition)
 
     print("\t LOPO analysis, ask the Oracle.")
-    train.perform_lopo(
-        features, metadata, model_wo_sel, profile_name, condition, which_oracle=oracle
+    # train.perform_lopo(
+    #     features, metadata, model_wo_sel, profile_name, condition, which_oracle=oracle
+    # )
+
+    path = utils.get_path("results")
+    print("Analysis")
+    analysis.build_analysis(
+        features, metadata, profile_name, condition, "healthy", path
     )
 
 
