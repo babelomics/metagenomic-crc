@@ -12,6 +12,7 @@ from sklearn.feature_selection import SelectFpr
 from interpret.glassbox import ExplainableBoostingClassifier
 from scipy.spatial.distance import pdist
 from mlgut.rbo import rbo_dict
+import pandas as pd
 
 
 def get_model(profile: str, selector=True) -> Pipeline:
@@ -99,17 +100,33 @@ def compute_rbo_mat(rank_mat_filt, p=0.999, filt=True):
     return distmat
 
 
-def compute_support_ebm(model, quantile=None):
+def compute_support_ebm(model: Pipeline, quantile=None):
     #TODO: check if trained
-    support = model["selector"].get_support()
-    
-    coefs = np.zeros(support.size)
-    
     ebm = model["estimator"]
     ebm_global = ebm.explain_global()
     data = ebm_global.data()
+
+    if "selector" in model.named_steps.keys():
+        support = model["selector"].get_support()
+    else:
+        support = np.repeat(True, len(data["scores"]))
+    
+    coefs = np.zeros(support.size)
     coefs[support] = np.array(data["scores"])
     
     support = support * 1
     
     return support, coefs
+
+
+def get_lopo_support(cv_results, columns):
+
+    support = [
+        pd.Series(compute_support_ebm(est)[1], index=columns)
+        for est in cv_results["estimator"]
+    ]
+    support = pd.concat(support, axis=1)
+    support /= support.max()
+    support = support.sum(axis=1).sort_values()
+
+    return support
