@@ -36,6 +36,24 @@ PROJECT_COLUMN_NAME = "SECONDARY_STUDY_ID"
 RESULTS_PATH = get_path("results")
 
 
+def load_crossproject(condition, profile, path):
+    crossproject_fname = f"{condition}_{profile}_cross_project.jbl"
+    crossproject_fpath = path.joinpath(crossproject_fname)
+    crossproject_results = joblib.load(crossproject_fpath)
+    for key in crossproject_results.keys():
+        crossproject_results[PROJECT_NAMES_DICT[key]] = crossproject_results.pop(key)
+
+    return crossproject_results
+
+
+def load_stability(condition, profile, path):
+    stability_fname = f"{condition}_{profile}_stability.jbl"
+    stability_fpath = path.joinpath(stability_fname)
+    stability_results = joblib.load(stability_fpath)
+    for key in stability_results.keys():
+        stability_results[PROJECT_NAMES_DICT[key]] = stability_results.pop(key)
+
+    return stability_results
 
 
 def compute_error(results, alpha=0.05, metric="roc_auc"):
@@ -65,14 +83,8 @@ def compute_stability(results, alpha=0.05):
     return support_matrix, stability, stability_error
 
 
-
 def analyze_stability(features, metadata, profile, condition, path):
-    stability_fname = f"{condition}_{profile}_stability.jbl"
-    stability_fpath = path.joinpath(stability_fname)
-    stability_results = joblib.load(stability_fpath)
-    for key in stability_results.keys():
-        stability_results[PROJECT_NAMES_DICT[key]] = stability_results.pop(key)
-
+    stability_results = load_stability(condition, profile, path)
     stability_results_df = {
         key: compute_stability(stability_results[key])[1:]
         for key in stability_results.keys()
@@ -82,12 +94,7 @@ def analyze_stability(features, metadata, profile, condition, path):
     )
     stability_results_df = stability_results_df.T.sort_index()
 
-    crossproject_fname = f"{condition}_{profile}_cross_project.jbl"
-    crossproject_fpath = path.joinpath(crossproject_fname)
-    crossproject_results = joblib.load(crossproject_fpath)
-    for key in crossproject_results.keys():
-        crossproject_results[PROJECT_NAMES_DICT[key]] = crossproject_results.pop(key)
-
+    crossproject_results = load_crossproject(condition, profile, path)
     crossproject_results_df = {
         key: compute_stability(crossproject_results[key]["cv"])[1:]
         for key in crossproject_results.keys()
