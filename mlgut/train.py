@@ -396,4 +396,4 @@ def perform_lopo_with_oracle(
         fpath = RESULTS_PATH.joinpath(fname)
         joblib.dump(results, fpath)
 
-    return results
+    return results, oracle
