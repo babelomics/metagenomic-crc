@@ -180,7 +180,35 @@ def plot_error(cp_df, stab_df, path):
 
 
 def analyze_rank_stability(features, metadata, profile, condition, path):
-    pass
+    results = load_crossproject(condition, profile, path)
+
+    def compute_ebm_fi_by_project(results, key):
+        ebm_fi_list = [
+            pd.Series(compute_support_ebm(model)[1], index=features.columns)
+            for model in results[key]["cv"]["estimator"]
+        ]
+        ebm_fi = pd.concat(ebm_fi_list, axis=1)
+
+        return ebm_fi
+
+    ebm_fi_by_project = {
+        key: compute_ebm_fi_by_project(results, key) for key in results.keys()
+    }
+
+    dmat = {
+        key: compute_rbo_mat(ebm_fi_by_project[key]) for key in ebm_fi_by_project.keys()
+    }
+
+    dmat = pd.DataFrame(dmat).melt(value_name="dRBO", var_name="Project")
+
+    plt.figure(figsize=(16, 9))
+    sns.violinplot(x="Project", y="dRBO", data=dmat, order=PROJECT_ORDER)
+    plt.ylim([-0.1, 1.1])
+    plt.tight_layout()
+    for ext in EXTENSIONS:
+        fname = f"rank_stability.{ext}"
+        fpath = path.joinpath(fname)
+        plt.savefig(fpath, dpi=300, bbox_inches="tight", pad_inches=0)
 
 
 def build_analysis(features, metadata, profile, condition, path):
