@@ -6,7 +6,6 @@ email: carlos.loucera@juntadeandalucia.es
 Analise pre-trained models.
 """
 import csv
-from ete3 import NCBITaxa
 import joblib
 import numpy as np
 from scipy import stats
@@ -36,7 +35,7 @@ DISEASE_COLUMN_NAME = "DISEASE"
 PROJECT_COLUMN_NAME = "SECONDARY_STUDY_ID"
 RESULTS_PATH = get_path("results")
 
-ncbi = NCBITaxa()
+
 
 
 def compute_error(results, alpha=0.05, metric="roc_auc"):
@@ -65,35 +64,6 @@ def compute_stability(results, alpha=0.05):
 
     return support_matrix, stability, stability_error
 
-
-def get_desired_ranks(taxid, desired_ranks):
-    lineage = ncbi.get_lineage(taxid)
-    names = ncbi.get_taxid_translator(lineage)
-    lineage2ranks = ncbi.get_rank(names)
-    ranks2lineage = dict((rank, taxid) for (taxid, rank) in lineage2ranks.items())
-    rank_dict = {
-        "{}_id".format(rank): ranks2lineage.get(rank, "<not present>")
-        for rank in desired_ranks
-    }
-    for key, rank in rank_dict.items():
-        if rank != "<not present>":
-            rank_dict[key] = ncbi.get_taxid_translator([rank])
-
-    return rank_dict
-
-
-def get_tax_data(taxids):
-    desired_ranks = [
-        "kingdom",
-        "phylum",
-        "class",
-        "order",
-        "family",
-        "genus",
-        "species",
-    ]
-
-    return {taxid: get_desired_ranks(taxid, desired_ranks) for taxid in taxids}
 
 
 def analyze_stability(features, metadata, profile, condition, path):

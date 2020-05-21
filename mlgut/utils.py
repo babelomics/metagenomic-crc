@@ -7,6 +7,8 @@ Utiity functions.
 """
 from pathlib import Path
 import dotenv
+from ete3 import NCBITaxa
+
 
 
 DOTENV_FILE = dotenv.find_dotenv()
@@ -98,3 +100,9 @@ def get_results_path() -> Path:
     path.mkdir(parents=True, exist_ok=True)
 
     return path
+
+def get_ncbi() -> NCBITaxa:
+    # builds database on first call
+    ncbi = NCBITaxa()
+
+    return ncbi
