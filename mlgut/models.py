@@ -101,7 +101,7 @@ def compute_rbo_mat(rank_mat_filt, p=0.999, filt=True):
 
 
 def compute_support_ebm(model: Pipeline, quantile=None):
-    #TODO: check if trained
+    # TODO: check if trained
     ebm = model["estimator"]
     ebm_global = ebm.explain_global()
     data = ebm_global.data()
@@ -110,12 +110,12 @@ def compute_support_ebm(model: Pipeline, quantile=None):
         support = model["selector"].get_support()
     else:
         support = np.repeat(True, len(data["scores"]))
-    
+
     coefs = np.zeros(support.size)
     coefs[support] = np.array(data["scores"])
-    
+
     support = support * 1
-    
+
     return support, coefs
 
 
@@ -135,7 +135,11 @@ def get_lopo_support(cv_results, columns):
 def get_cp_support(results, columns):
 
     support = [
-        pd.Series(compute_support_ebm(results[project]["model"])[1], index=columns)
+        pd.Series(
+            compute_support_ebm(results[project]["model"])[1],
+            index=columns,
+            name=project,
+        )
         for project in results.keys()
     ]
     support = pd.concat(support, axis=1)
