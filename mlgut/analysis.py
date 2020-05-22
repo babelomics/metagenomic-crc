@@ -88,8 +88,9 @@ def compute_stability(results, alpha=0.05):
     return support_matrix, stability, stability_error
 
 
-def analyze_stability(features, metadata, profile, condition, path):
-    stability_results = load_stability(condition, profile, path)
+def analyze_stability(
+    stability_results, crossproject_results, condition, profile, path
+):
     stability_results_df = {
         key: compute_stability(stability_results[key])[1:]
         for key in stability_results.keys()
@@ -99,7 +100,6 @@ def analyze_stability(features, metadata, profile, condition, path):
     )
     stability_results_df = stability_results_df.T.sort_index()
 
-    crossproject_results = load_crossproject(condition, profile, path)
     crossproject_results_df = {
         key: compute_stability(crossproject_results[key]["cv"])[1:]
         for key in crossproject_results.keys()
@@ -188,7 +188,7 @@ def plot_error(cp_df, stab_df, path):
     plt.close()
 
 
-def analyze_rank_stability(features, metadata, profile, condition, path):
+def analyze_rank_stability(results, features, profile, condition, path):
     results = load_crossproject(condition, profile, path)
 
     def compute_ebm_fi_by_project(results, key):
@@ -215,17 +215,13 @@ def analyze_rank_stability(features, metadata, profile, condition, path):
     plt.ylim([-0.1, 1.1])
     plt.tight_layout()
     for ext in EXTENSIONS:
-        fname = f"rank_stability.{ext}"
+        fname = f"´{condition}_{profile}_rank_stability.{ext}"
         fpath = path.joinpath(fname)
         plt.savefig(fpath, dpi=300, bbox_inches="tight", pad_inches=0)
     plt.close()
 
 
-def analyze_lopo_wo_oracle(features, metadata, profile, condition, control, path):
-    fname = f"{condition}_{profile}_lopo.jbl"
-    fpath = path.joinpath(fname)
-    results = joblib.load(fpath)
-
+def analyze_lopo_wo_oracle(results, features, metadata, profile, condition, control):
     query = metadata[DISEASE_COLUMN_NAME].isin([control, condition])
     projects = metadata.loc[query, PROJECT_COLUMN_NAME]
 
@@ -239,11 +235,7 @@ def analyze_lopo_wo_oracle(features, metadata, profile, condition, control, path
     return lopo_mean, support
 
 
-def analyze_lopo_with_oracle(features, metadata, profile, condition, control, path):
-    fname = f"{condition}_{profile}_lopo_with_oracle.jbl"
-    fpath = path.joinpath(fname)
-    results = joblib.load(fpath)
-
+def analyze_lopo_with_oracle(results, metadata, profile, condition, control):
     query = metadata[DISEASE_COLUMN_NAME].isin([control, condition])
     projects = metadata.loc[query, PROJECT_COLUMN_NAME]
 
@@ -277,8 +269,7 @@ def plot_lopo(frame, support, profile, condition, path, oracle=True):
     support.to_csv(fpath, sep="\t")
 
 
-def get_cross_project_data(names, profile, condition, path):
-    results = load_crossproject(condition, profile, path)
+def get_cross_project_data(names, profile, condition, results):
 
     l = []
     for project_id in results.keys():
@@ -340,28 +331,46 @@ def plot_scores(mat, condition, profile, path):
     plt.close()
 
 
+def load_lopo(condition, profile, path, oracle=False):
+    if oracle:
+        with_str = "with"
+    else:
+        with_str = "wo"
+
+    fname = f"{condition}_{profile}_lopo_{with_str}_oracle.jbl"
+    fpath = path.joinpath(fname)
+    results = joblib.load(fpath)
+
+    return results
+
+
 def build_analysis(features, metadata, profile, condition, control, path):
+    results_stab = load_stability(condition, profile, path)
+    results_cp = load_crossproject(condition, profile, path)
+    results_lopo_wo_oracle = load_lopo(condition, profile, path, oracle=False)
+    results_lopo_with_oracle = load_lopo(condition, profile, path, oracle=True)
+
     metadata_ = metadata.copy()
     metadata_[PROJECT_COLUMN_NAME] = metadata_[PROJECT_COLUMN_NAME].replace(
         PROJECT_NAMES_DICT
     )
 
     cp_mat, cp_fi, cp_fi_merged = get_cross_project_data(
-        features.columns, profile, condition, path
+        features.columns, profile, condition, results_cp
     )
     cp_fi.to_csv(path.joinpath(f"{condition}_{profile}_cp_support.tsv"), sep="\t")
     cp_fi_merged.to_csv(
         path.joinpath(f"{condition}_{profile}_cp_support_merge.tsv"), sep="\t"
     )
 
-    analyze_stability(features, metadata_, profile, condition, path)
-    analyze_rank_stability(features, metadata_, profile, condition, path)
+    analyze_stability(results_stab, results_cp, condition, profile, path)
+    analyze_rank_stability(results_cp, features, profile, condition, path)
 
     lopo_wo_oracle, support_lopo_wo_oracle = analyze_lopo_wo_oracle(
-        features, metadata, profile, condition, control, path
+        results_lopo_wo_oracle, features, metadata, profile, condition, control
     )
     lopo_with_oracle, support_lopo_with_oracle = analyze_lopo_with_oracle(
-        features, metadata, profile, condition, control, path
+        results_lopo_with_oracle, metadata, profile, condition, control
     )
 
     plot_lopo(
