@@ -126,13 +126,15 @@ def analyze_stability(
         value_name="Mean AUROC", var_name="Project"
     )
 
-    plot_stability(crossproject_results_df, stability_results_df, path)
-    plot_error(roc_auc_crossproject, roc_auc_stability, path)
+    plot_stability(
+        crossproject_results_df, stability_results_df, condition, profile, path
+    )
+    plot_error(roc_auc_crossproject, roc_auc_stability, condition, profile, path)
 
     return roc_auc_crossproject
 
 
-def plot_stability(cp_df, stab_df, path):
+def plot_stability(cp_df, stab_df, condition, profile, path):
     plt.style.use("fivethirtyeight")
     _, ax = plt.subplots(1, 1, figsize=(16, 9))
     plt.errorbar(
@@ -152,13 +154,13 @@ def plot_stability(cp_df, stab_df, path):
     plt.legend(loc="lower right")
     plt.tight_layout()
     for ext in EXTENSIONS:
-        fname = f"feature_selection_stability.{ext}"
+        fname = f"{condition}_{profile}_feature_selection_stability.{ext}"
         fpath = path.joinpath(fname)
         plt.savefig(fpath, dpi=300, bbox_inches="tight", pad_inches=0)
     plt.close()
 
 
-def plot_error(cp_df, stab_df, path):
+def plot_error(cp_df, stab_df, condition, profile, path):
     _, ax = plt.subplots(1, 1, figsize=(16, 9))
 
     sns.lineplot(
@@ -182,7 +184,7 @@ def plot_error(cp_df, stab_df, path):
     plt.legend(loc="lower right")
     plt.tight_layout()
     for ext in EXTENSIONS:
-        fname = f"feature_selection_stability_error.{ext}"
+        fname = f"{condition}_{profile}_feature_selection_stability_error.{ext}"
         fpath = path.joinpath(fname)
         plt.savefig(fpath, dpi=300, bbox_inches="tight", pad_inches=0)
     plt.close()
@@ -215,7 +217,7 @@ def analyze_rank_stability(results, features, profile, condition, path):
     plt.ylim([-0.1, 1.1])
     plt.tight_layout()
     for ext in EXTENSIONS:
-        fname = f"´{condition}_{profile}_rank_stability.{ext}"
+        fname = f"{condition}_{profile}_rank_stability.{ext}"
         fpath = path.joinpath(fname)
         plt.savefig(fpath, dpi=300, bbox_inches="tight", pad_inches=0)
     plt.close()
@@ -324,8 +326,11 @@ def plot_scores(mat, condition, profile, path):
         yticklabels=True,
     )
     ax.xaxis.set_ticks_position("top")
+    ax.set_xticklabels(
+        ax.get_xticklabels(), rotation=45, horizontalalignment="right",
+    )
     for ext in EXTENSIONS:
-        fname = f"score_matrix.{ext}"
+        fname = f"{condition}_{profile}_score_matrix.{ext}"
         fpath = path.joinpath(fname)
         plt.savefig(fpath, dpi=300, bbox_inches="tight", pad_inches=0)
     plt.close()
