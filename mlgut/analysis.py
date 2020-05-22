@@ -15,8 +15,14 @@ from mlgut.datasets import get_path
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from mlgut.models import compute_rbo_mat, compute_support_ebm, get_lopo_support
+from mlgut.models import (
+    compute_rbo_mat,
+    compute_support_ebm,
+    get_lopo_support,
+    get_cp_support,
+)
 from sklearn.model_selection import LeaveOneGroupOut
+from sklearn import metrics
 
 
 EXTENSIONS = ["pdf", "png", "svg"]
@@ -268,15 +274,59 @@ def plot_lopo(frame, support, profile, condition, path, oracle=True):
     support.to_csv(fpath, sep="\t")
 
 
-def get_cross_project_scores(features, metadata_, profile, condition, path):
+def get_cross_project_data(names, profile, condition, path):
     results = load_crossproject(condition, profile, path)
 
-    cp_frame = {key: results[key]["cv"]["test_roc_auc"] for key in results.keys()}
-    cp_frame = pd.DataFrame(cp_frame)
+    l = []
+    for project_id in results.keys():
+        r = results[project_id]["outer"][
+            [PROJECT_COLUMN_NAME, DISEASE_COLUMN_NAME, "decission"]
+        ].copy()
+        r[PROJECT_COLUMN_NAME] = r[PROJECT_COLUMN_NAME].replace(PROJECT_NAMES_DICT)
+        r = r.groupby(PROJECT_COLUMN_NAME).apply(
+            lambda x: metrics.roc_auc_score(
+                x[DISEASE_COLUMN_NAME] == condition, x["decission"]
+            )
+        )
+        r.name = project_id
+        l.append(r)
 
-    outer_frame = 's'
+    r = pd.concat(l, axis=1).T
+    for project_id in results.keys():
+        r.loc[project_id, project_id] = np.mean(
+            results[project_id]["cv"]["test_roc_auc"]
+        )
 
-    return 1
+    fi, fi_merged = get_cp_support(results, names)
+
+    return r, fi, fi_merged
+
+
+def plot_scores(cp_mat, lopo_wo_oracle, lopo_with_oracle, path):
+    mat = cp_mat.copy()
+    mat = mat.loc[PROJECT_ORDER, PROJECT_ORDER]
+    mat.loc["Mean", :] = mat.mean(axis=0)
+    lopo_wo_oracle_series = pd.Series(lopo_wo_oracle, name="LOPO")
+    lopo_with_oracle_series = pd.Series(lopo_with_oracle, name="oLOPO")
+    mat = mat.append(lopo_wo_oracle_series)
+    mat = mat.append(lopo_with_oracle_series)
+    mat["Mean"] = mat.mean(axis=1)
+
+    ax = sns.heatmap(
+        mat,
+        annot=True,
+        fmt=".2f",
+        vmin=0.0,
+        vmax=1.0,
+        cbar=False,
+        xticklabels=True,
+        yticklabels=True,
+    )
+    ax.xaxis.set_ticks_position("top")
+    for ext in EXTENSIONS:
+        fname = f"score_matrix.{ext}"
+        fpath = path.joinpath(fname)
+        plt.savefig(fpath, dpi=300, bbox_inches="tight", pad_inches=0)
 
 
 def build_analysis(features, metadata, profile, condition, control, path):
@@ -284,6 +334,12 @@ def build_analysis(features, metadata, profile, condition, control, path):
     metadata_[PROJECT_COLUMN_NAME] = metadata_[PROJECT_COLUMN_NAME].replace(
         PROJECT_NAMES_DICT
     )
+
+    cp_mat, cp_fi, cp_fi_merged = get_cross_project_data(
+        features.columns, profile, condition, path
+    )
+    cp_fi.to_csv(path.joinpath("cp_support.tsv"), sep="\t")
+    cp_fi_merged.to_csv(path.joinpath("cp_support_merged.tsv"), sep="\t")
 
     analyze_stability(features, metadata_, profile, condition, path)
     analyze_rank_stability(features, metadata_, profile, condition, path)
@@ -307,4 +363,4 @@ def build_analysis(features, metadata, profile, condition, control, path):
         oracle=True,
     )
 
-    scores = get_cross_project_scores(features, metadata_, profile, condition, path)
+    plot_scores(cp_mat, lopo_wo_oracle, lopo_with_oracle, path)
