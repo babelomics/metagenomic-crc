@@ -155,6 +155,7 @@ def plot_stability(cp_df, stab_df, path):
         fname = f"feature_selection_stability.{ext}"
         fpath = path.joinpath(fname)
         plt.savefig(fpath, dpi=300, bbox_inches="tight", pad_inches=0)
+    plt.close()
 
 
 def plot_error(cp_df, stab_df, path):
@@ -184,6 +185,7 @@ def plot_error(cp_df, stab_df, path):
         fname = f"feature_selection_stability_error.{ext}"
         fpath = path.joinpath(fname)
         plt.savefig(fpath, dpi=300, bbox_inches="tight", pad_inches=0)
+    plt.close()
 
 
 def analyze_rank_stability(features, metadata, profile, condition, path):
@@ -216,6 +218,7 @@ def analyze_rank_stability(features, metadata, profile, condition, path):
         fname = f"rank_stability.{ext}"
         fpath = path.joinpath(fname)
         plt.savefig(fpath, dpi=300, bbox_inches="tight", pad_inches=0)
+    plt.close()
 
 
 def analyze_lopo_wo_oracle(features, metadata, profile, condition, control, path):
@@ -302,7 +305,8 @@ def get_cross_project_data(names, profile, condition, path):
     return r, fi, fi_merged
 
 
-def plot_scores(cp_mat, lopo_wo_oracle, lopo_with_oracle, path):
+def build_scoring_mat(cp_mat, lopo_wo_oracle, lopo_with_oracle):
+
     mat = cp_mat.copy()
     mat = mat.loc[PROJECT_ORDER, PROJECT_ORDER]
     mat.loc["Mean", :] = mat.mean(axis=0)
@@ -312,6 +316,12 @@ def plot_scores(cp_mat, lopo_wo_oracle, lopo_with_oracle, path):
     mat = mat.append(lopo_with_oracle_series)
     mat["Mean"] = mat.mean(axis=1)
 
+    return mat
+
+
+def plot_scores(mat, condition, profile, path):
+
+    plt.figure()
     ax = sns.heatmap(
         mat,
         annot=True,
@@ -327,6 +337,7 @@ def plot_scores(cp_mat, lopo_wo_oracle, lopo_with_oracle, path):
         fname = f"score_matrix.{ext}"
         fpath = path.joinpath(fname)
         plt.savefig(fpath, dpi=300, bbox_inches="tight", pad_inches=0)
+    plt.close()
 
 
 def build_analysis(features, metadata, profile, condition, control, path):
@@ -338,8 +349,10 @@ def build_analysis(features, metadata, profile, condition, control, path):
     cp_mat, cp_fi, cp_fi_merged = get_cross_project_data(
         features.columns, profile, condition, path
     )
-    cp_fi.to_csv(path.joinpath("cp_support.tsv"), sep="\t")
-    cp_fi_merged.to_csv(path.joinpath("cp_support_merged.tsv"), sep="\t")
+    cp_fi.to_csv(path.joinpath(f"{condition}_{profile}_cp_support.tsv"), sep="\t")
+    cp_fi_merged.to_csv(
+        path.joinpath(f"{condition}_{profile}_cp_support_merge.tsv"), sep="\t"
+    )
 
     analyze_stability(features, metadata_, profile, condition, path)
     analyze_rank_stability(features, metadata_, profile, condition, path)
@@ -363,4 +376,5 @@ def build_analysis(features, metadata, profile, condition, control, path):
         oracle=True,
     )
 
-    plot_scores(cp_mat, lopo_wo_oracle, lopo_with_oracle, path)
+    score_mat = build_scoring_mat(cp_mat, lopo_wo_oracle, lopo_with_oracle)
+    plot_scores(score_mat, condition, profile, path)
