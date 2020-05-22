@@ -127,6 +127,6 @@ def get_lopo_support(cv_results, columns):
     ]
     support = pd.concat(support, axis=1)
     support /= support.max()
-    support = support.sum(axis=1).sort_values()
+    support = support.sum(axis=1).sort_values(ascending=False)
 
     return support
