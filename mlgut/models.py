@@ -130,3 +130,16 @@ def get_lopo_support(cv_results, columns):
     support = support.sum(axis=1).sort_values(ascending=False)
 
     return support
+
+
+def get_cp_support(results, columns):
+
+    support = [
+        pd.Series(compute_support_ebm(results[project]["model"])[1], index=columns)
+        for project in results.keys()
+    ]
+    support = pd.concat(support, axis=1)
+    support_merged = support / support.max()
+    support_merged = support_merged.sum(axis=1).sort_values(ascending=False)
+
+    return support, support_merged
