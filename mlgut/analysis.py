@@ -327,7 +327,7 @@ def plot_scores(mat, condition, profile, path):
     )
     ax.xaxis.set_ticks_position("top")
     ax.set_xticklabels(
-        ax.get_xticklabels(), rotation=45, horizontalalignment="right",
+        ax.get_xticklabels(), rotation=45
     )
     for ext in EXTENSIONS:
         fname = f"{condition}_{profile}_score_matrix.{ext}"
