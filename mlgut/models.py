@@ -8,11 +8,12 @@ ML models module.
 import numpy as np
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, KBinsDiscretizer
-from sklearn.feature_selection import SelectFpr
+from sklearn.feature_selection import SelectFpr, SelectFdr
 from interpret.glassbox import ExplainableBoostingClassifier
 from scipy.spatial.distance import pdist
 from mlgut.rbo import rbo_dict
 import pandas as pd
+from sklearn import metrics
 
 
 def get_model(profile: str, selector=True) -> Pipeline:
@@ -38,7 +39,7 @@ def get_model(profile: str, selector=True) -> Pipeline:
     if profile.lower() in ["taxo", "taxonomic", "centrifuge"]:
         model = get_taxonomic_model()
     elif 'kegg' in profile.lower():
-        model = get_taxonomic_model()
+        model = get_kegg_model()
     else:
         raise NotImplementedError
 
@@ -89,17 +90,76 @@ def get_taxonomic_model(selector=True) -> Pipeline:
     return model
 
 
-def compute_rbo_mat(rank_mat_filt, p=0.999, filt=True):
+
+def get_kegg_model(selector=True) -> Pipeline:
+    """[summary]
+
+    Parameters
+    ----------
+    selector : bool, optional
+        [description], by default True
+
+    Returns
+    -------
+    Pipeline
+        [description]
+    """
+    if selector:
+        model = Pipeline(
+            [
+                ("transformer", FunctionTransformer(np.log1p)),
+                ("selector", SelectFdr()),
+                (
+                    "estimator",
+                    ExplainableBoostingClassifier(
+                        n_estimators=32, n_jobs=-1, random_state=42
+                    ),
+                ),
+            ]
+        )
+    else:
+        model = Pipeline(
+            [
+                ("transformer", FunctionTransformer(np.log1p)),
+                (
+                    "estimator",
+                    ExplainableBoostingClassifier(
+                        n_estimators=32, n_jobs=-1, random_state=42
+                    ),
+                ),
+            ]
+        )
+
+    return model
+
+# def compute_rbo_mat(rank_mat_filt, p=0.999, filt=True):
+#     if filt:
+#         # safe filter to speed up the computation
+#         rank_mat_filt = rank_mat_filt.loc[rank_mat_filt.any(axis=1), :]
+
+#     col_dict_list = np.array(
+#         [rank_mat_filt[col].to_dict() for col in rank_mat_filt.columns]
+#     ).reshape(-1, 1)
+#     distmat = pdist(col_dict_list, lambda x, y: 1 - rbo_dict(x[0], y[0], p=p)[-1])
+
+#     return distmat
+
+def rbo_dist(x, y, p=0.999):
+    x_dict = pd.Series(x).to_dict()
+    y_dict = pd.Series(y).to_dict()
+    
+    return 1 - rbo_dict(x_dict, y_dict, p=p)[-1]
+
+def compute_rbo_mat(rank_mat, p=0.999, filt=True):
     if filt:
         # safe filter to speed up the computation
-        rank_mat_filt = rank_mat_filt.loc[rank_mat_filt.any(axis=1), :]
+        rank_mat_filt = rank_mat.loc[rank_mat.any(axis=1), :]
+    else:
+        rank_mat_filt = rank_mat
+   
+    dmat = metrics.pairwise_distances(X=rank_mat_filt, n_jobs=-1, metric=rbo_dist, p=p)
 
-    col_dict_list = np.array(
-        [rank_mat_filt[col].to_dict() for col in rank_mat_filt.columns]
-    ).reshape(-1, 1)
-    distmat = pdist(col_dict_list, lambda x, y: 1 - rbo_dict(x[0], y[0], p=p)[-1])
-
-    return distmat
+    return dmat
 
 
 def compute_support_ebm(model: Pipeline, quantile=None):
