@@ -311,7 +311,7 @@ def perform_lopo_wo_oracle(
     )
 
     if save:
-        fname = f"{condition}_{profile}_lopo.jbl"
+        fname = f"{condition}_{profile}_lopo_wo_oracle.jbl"
         fpath = RESULTS_PATH.joinpath(fname)
         joblib.dump(results, fpath)
 
