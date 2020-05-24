@@ -37,6 +37,8 @@ def get_model(profile: str, selector=True) -> Pipeline:
     """
     if profile.lower() in ["taxo", "taxonomic", "centrifuge"]:
         model = get_taxonomic_model()
+    elif 'kegg' in profile.lower():
+        model = get_taxonomic_model()
     else:
         raise NotImplementedError
 
