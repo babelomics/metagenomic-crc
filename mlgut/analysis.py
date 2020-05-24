@@ -191,8 +191,6 @@ def plot_error(cp_df, stab_df, condition, profile, path):
 
 
 def analyze_rank_stability(results, features, profile, condition, path):
-    results = load_crossproject(condition, profile, path)
-
     def compute_ebm_fi_by_project(results, key):
         ebm_fi_list = [
             pd.Series(compute_support_ebm(model)[1], index=features.columns)
@@ -369,7 +367,6 @@ def build_analysis(features, metadata, profile, condition, control, path):
     )
 
     analyze_stability(results_stab, results_cp, condition, profile, path)
-    analyze_rank_stability(results_cp, features, profile, condition, path)
 
     lopo_wo_oracle, support_lopo_wo_oracle = analyze_lopo_wo_oracle(
         results_lopo_wo_oracle, features, metadata, profile, condition, control
@@ -392,3 +389,5 @@ def build_analysis(features, metadata, profile, condition, control, path):
 
     score_mat = build_scoring_mat(cp_mat, lopo_wo_oracle, lopo_with_oracle)
     plot_scores(score_mat, condition, profile, path)
+
+    analyze_rank_stability(results_cp, features, profile, condition, path)
