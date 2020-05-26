@@ -51,7 +51,7 @@ dependencies:
   - jupyterlab_server=1.1.4=py_0
   - kiwisolver=1.2.0=py37h99015e2_0
   - lazy-object-proxy=1.4.3=py37h8f50634_2
-  - ld_impl_linux-64=2.34=h53a641e_0
+  - ld_impl_linux-64=2.34
   - libblas=3.8.0=16_openblas
   - libcblas=3.8.0=16_openblas
   - libclang=9.0.1=default_hde54327_0
