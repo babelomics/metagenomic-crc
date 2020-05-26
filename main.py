@@ -68,27 +68,38 @@ def train_interpreter(condition, profile_name):
     profile_name : [type]
         [description]
     """
+    import pandas as pd
+
     print(f"Building datasets for {condition} condition and profile {profile_name}")
     features, metadata = datasets.build_condition_dataset(condition, profile_name)
+    #TODO: filter it with a CLI option
+    tax_id = "9606"
+    print(tax_id in features.columns)
+    features = features.drop(tax_id, axis=1)
+    # features2, _ = datasets.build_condition_dataset(condition, "centrifuge")
+    # features = pd.concat((features, features2), axis=1)
     model = models.get_model(profile_name)
     print(model)
-
-    print("\t Stability analysis.")
-    train.perform_stability_analysis(features, metadata, model, profile_name, condition)
-
+   
     print("\t Cross-project analysis.")
     train.perform_crossproject_analysis(
         features, metadata, model, profile_name, condition
     )
 
     print("\t LOPO analysis, do not ask the Oracle.")
-    model_wo_sel = models.get_model(profile_name, selector=False)
-    _, oracle = train.perform_lopo(features, metadata, model, profile_name, condition)
+    model_with_sel = models.get_model(profile_name, selector=True, lopo=True)
+    _, oracle = train.perform_lopo(
+        features, metadata, model_with_sel, profile_name, condition
+    )
 
     print("\t LOPO analysis, ask the Oracle.")
+    model_wo_sel = models.get_model(profile_name, selector=False)
     train.perform_lopo(
         features, metadata, model_wo_sel, profile_name, condition, which_oracle=oracle
     )
+
+    print("\t Stability analysis.")
+    train.perform_stability_analysis(features, metadata, model, profile_name, condition)
 
     path = utils.get_path("results")
     print("Analysis")
@@ -99,5 +110,5 @@ def train_interpreter(condition, profile_name):
 
 if __name__ == "__main__":
     condition = "CRC"
-    profile_name = "KEGG_KOs"
+    profile_name = "centrifuge"
     main(condition, profile_name, build_data=False, sync=False)

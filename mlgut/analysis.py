@@ -228,11 +228,11 @@ def analyze_lopo_wo_oracle(results, features, metadata, profile, condition, cont
     lopo_mean = dict(zip(np.unique(projects), results["test_roc_auc"]))
     lopo_mean = utils.rename_keys(lopo_mean, PROJECT_NAMES_DICT)
 
-    support = get_lopo_support(results, features.columns)
+    _, support_merged = get_lopo_support(results, features.columns)
 
     print(lopo_mean, np.mean(results["test_roc_auc"]))
 
-    return lopo_mean, support
+    return lopo_mean, support_merged
 
 
 def analyze_lopo_with_oracle(results, metadata, profile, condition, control):
@@ -251,7 +251,7 @@ def analyze_lopo_with_oracle(results, metadata, profile, condition, control):
             best = mean_i
             keep = lopo_mean_i
             columns = results[i]["columns"]
-            best_support = get_lopo_support(results[i]["cv"], columns)
+            _, best_support = get_lopo_support(results[i]["cv"], columns)
 
         print(lopo_mean_i, mean_i)
 
@@ -263,7 +263,7 @@ def plot_lopo(frame, support, profile, condition, path, oracle=True):
         with_str = "with"
     else:
         with_str = "wo"
-
+    print(frame)
     fname = f"{condition}_{profile}_lopo_{with_str} _oracle_support.tsv"
     fpath = path.joinpath(fname)
     support.to_csv(fpath, sep="\t")
@@ -364,9 +364,7 @@ def build_analysis(features, metadata, profile, condition, control, path):
     cp_fi.to_csv(path.joinpath(f"{condition}_{profile}_cp_support.tsv"), sep="\t")
     cp_fi_merged.to_csv(
         path.joinpath(f"{condition}_{profile}_cp_support_merge.tsv"), sep="\t"
-    )
-
-    analyze_stability(results_stab, results_cp, condition, profile, path)
+    )  
 
     lopo_wo_oracle, support_lopo_wo_oracle = analyze_lopo_wo_oracle(
         results_lopo_wo_oracle, features, metadata, profile, condition, control
@@ -374,6 +372,9 @@ def build_analysis(features, metadata, profile, condition, control, path):
     lopo_with_oracle, support_lopo_with_oracle = analyze_lopo_with_oracle(
         results_lopo_with_oracle, metadata, profile, condition, control
     )
+
+    score_mat = build_scoring_mat(cp_mat, lopo_wo_oracle, lopo_with_oracle)
+    plot_scores(score_mat, condition, profile, path)
 
     plot_lopo(
         lopo_wo_oracle, support_lopo_wo_oracle, profile, condition, path, oracle=False
@@ -385,9 +386,7 @@ def build_analysis(features, metadata, profile, condition, control, path):
         condition,
         path,
         oracle=True,
-    )
+    )   
 
-    score_mat = build_scoring_mat(cp_mat, lopo_wo_oracle, lopo_with_oracle)
-    plot_scores(score_mat, condition, profile, path)
-
+    analyze_stability(results_stab, results_cp, condition, profile, path)
     analyze_rank_stability(results_cp, features, profile, condition, path)
