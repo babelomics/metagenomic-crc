@@ -17,11 +17,11 @@ random.seed(SEED)
 np.random.seed(SEED)
 
 
-def build_data_sources():
+def build_data_sources(profiles=["KEGG_KOs", "centrifuge"]):
     """[summary]
     """
     metadata = datasets.build_metadata()
-    metadata, features_dict = datasets.build_features(metadata)
+    metadata, features_dict = datasets.build_features(metadata, profiles)
     datasets.write_metadata(metadata)
     datasets.write_features(features_dict)
 
