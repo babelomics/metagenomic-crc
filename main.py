@@ -17,7 +17,7 @@ random.seed(SEED)
 np.random.seed(SEED)
 
 
-def build_data_sources(profiles=["KEGG_KOs", "centrifuge"]):
+def build_data_sources(profiles=["KEGG_KOs", "centrifuge", "OGs"]):
     """[summary]
     """
     metadata = datasets.build_metadata()
@@ -41,13 +41,15 @@ def main(condition, profile_name, build_data=True, sync=True, debug=True):
         [description], by default True
     """
     if sync:
+        print("Sync data.")
         subprocess.run(["sh", "mlgut/sync_data.sh"])
     if build_data:
+        print("Build Data sources.")
         build_data_sources()
     if debug:
         filter_warnings()
-
-    train_interpreter(condition, profile_name)
+    if profile_name is not None:
+        train_interpreter(condition, profile_name)
 
 
 def filter_warnings():
@@ -110,5 +112,5 @@ def train_interpreter(condition, profile_name):
 
 if __name__ == "__main__":
     condition = "CRC"
-    profile_name = "centrifuge"
-    main(condition, profile_name, build_data=False, sync=False)
+    profile_name = "OGs"
+    main(condition, profile_name=None, build_data=True, sync=False, debug=True)
