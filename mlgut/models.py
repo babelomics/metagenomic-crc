@@ -40,6 +40,8 @@ def get_model(profile: str, selector=True, lopo=False) -> Pipeline:
         model = get_taxonomic_model(selector, lopo)
     elif "kegg" in profile.lower():
         model = get_kegg_model(selector, lopo)
+    elif profile.lower() in ["ogs", "egg"]:
+        model = get_ogs_model(selector, lopo)
     else:
         raise NotImplementedError
 
@@ -107,6 +109,66 @@ def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
 
 
 def get_kegg_model(selector=True, lopo=False) -> Pipeline:
+    """[summary]
+
+    Parameters
+    ----------
+    selector : bool, optional
+        [description], by default True
+
+    Returns
+    -------
+    Pipeline
+        [description]
+    """
+    if selector:
+        model = Pipeline(
+            [
+                ("transformer", FunctionTransformer(np.log1p)),
+                ("discretizer", KBinsDiscretizer(n_bins=4, encode="ordinal")),
+                ("selector", SelectFpr()),
+                (
+                    "estimator",
+                    ExplainableBoostingClassifier(
+                        n_estimators=32, n_jobs=-1, random_state=42
+                    ),
+                ),
+            ]
+        )
+
+        if lopo:
+            model = Pipeline(
+                [
+                    ("transformer", FunctionTransformer(np.log1p)),
+                    ("discretizer", KBinsDiscretizer(n_bins=4, encode="ordinal")),
+                    ("selector", SelectFdr()),
+                    (
+                        "estimator",
+                        ExplainableBoostingClassifier(
+                            n_estimators=32, n_jobs=-1, random_state=42
+                        ),
+                    ),
+                ]
+            )
+
+    else:
+        model = Pipeline(
+            [
+                ("transformer", FunctionTransformer(np.log1p)),
+                ("discretizer", KBinsDiscretizer(n_bins=4, encode="ordinal")),
+                (
+                    "estimator",
+                    ExplainableBoostingClassifier(
+                        n_estimators=32, n_jobs=-1, random_state=42
+                    ),
+                ),
+            ]
+        )
+
+    return model
+
+
+def get_ogs_model(selector=True, lopo=False) -> Pipeline:
     """[summary]
 
     Parameters

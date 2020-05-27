@@ -17,7 +17,7 @@ random.seed(SEED)
 np.random.seed(SEED)
 
 
-def build_data_sources(profiles=["KEGG_KOs", "centrifuge", "OGs"]):
+def build_data_sources(profiles=["KEGG_KOs", "centrifuge", "OGs"],ext="jbl"):
     """[summary]
     """
     metadata = datasets.build_metadata()
@@ -26,7 +26,7 @@ def build_data_sources(profiles=["KEGG_KOs", "centrifuge", "OGs"]):
     datasets.write_features(features_dict)
 
 
-def main(condition, profile_name, build_data=True, sync=True, debug=True):
+def main(condition, profile_name, build_data=True, sync=True, debug=True, ext="jbl"):
     """[summary]
 
     Parameters
@@ -74,10 +74,12 @@ def train_interpreter(condition, profile_name):
 
     print(f"Building datasets for {condition} condition and profile {profile_name}")
     features, metadata = datasets.build_condition_dataset(condition, profile_name)
+    query = features.columns.str.lower().str.contains("bactNOG")
+    features = features.loc[:, query]
     #TODO: filter it with a CLI option
-    tax_id = "9606"
-    print(tax_id in features.columns)
-    features = features.drop(tax_id, axis=1)
+    # tax_id = "9606"
+    # print(tax_id in features.columns)
+    # features = features.drop(tax_id, axis=1)
     # features2, _ = datasets.build_condition_dataset(condition, "centrifuge")
     # features = pd.concat((features, features2), axis=1)
     model = models.get_model(profile_name)
