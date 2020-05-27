@@ -1,4 +1,3 @@
-name: null
 channels:
   - conda-forge
   - defaults
