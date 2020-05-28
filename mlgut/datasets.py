@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from mlgut.utils import get_path
+import joblib
 
 
 PROJECT_PATH = get_path("project")
@@ -152,7 +153,7 @@ def build_features(metadata: pd.DataFrame, profiles=["KEGG_KOs", "centrifuge"]):
     return metadata, profiles_dict
 
 
-def write_metadata(frame: pd.DataFrame):
+def write_metadata(frame: pd.DataFrame, ext="tsv"):
     """[summary]
 
     Parameters
@@ -160,12 +161,21 @@ def write_metadata(frame: pd.DataFrame):
     frame : pd.DataFrame
         [description]
     """
-    fname = "metadata.tsv"
+    ext_common = ext
+    if ext in ["jbl", "bin", "pickle"]:
+        ext_common = "jbl"
+
+    fname = f"metadata.{ext_common}"
     fpath = PROCESSED_DATA_PATH.joinpath(fname)
-    frame.to_csv(fpath, sep="\t", index_label="ENA-SAMPLE")
+    if ext_common == "tsv":
+        frame.to_csv(fpath, sep="\t", index_label="ENA-SAMPLE")
+    elif ext_common == "jbl":
+        joblib.dump(frame, fpath)
+    else:
+        raise NotImplementedError
 
 
-def write_features(profile_dict: dict):
+def write_features(profile_dict: dict, ext="tsv"):
     """[summary]
 
     Parameters
@@ -173,42 +183,109 @@ def write_features(profile_dict: dict):
     profile_dict : dict
         [description]
     """
-    for profile in profile_dict.keys():
-        fname = f"{profile}.tsv"
+    ext_common = ext
+    if ext in ["jbl", "bin", "pickle"]:
+        ext_common = "jbl"
+
+    for profile_name in profile_dict.keys():
+        fname = f"{profile_name}.{ext_common}"
         fpath = PROCESSED_DATA_PATH.joinpath(fname)
-        features = profile_dict[profile]
-        features.to_csv(fpath, sep="\t", index_label="ENA-SAMPLE")
+        if ext_common == "tsv":
+            profile_dict[profile_name].to_csv(fpath, sep="\t", index_label="ENA-SAMPLE")
+        elif ext_common == "jbl":
+            joblib.dump(profile_dict[profile_name], fpath)
+        else:
+            raise NotImplementedError
 
 
-def read_metadata():    
-    fname = 'metadata.tsv'
+def read_metadata(ext="tsv"):
+    ext_common = ext
+    if ext in ["jbl", "bin", "pickle"]:
+        ext_common = "jbl"
+    fname = f"metadata.{ext_common}"
     fpath = PROCESSED_DATA_PATH.joinpath(fname)
-    metadata = pd.read_csv(fpath, sep="\t", index_col=0)
-    
+    if ext_common == "tsv":
+        metadata = pd.read_csv(fpath, sep="\t", index_col=0)
+    else:
+        metadata = joblib.load(fpath)
+
     return metadata
 
 
-def build_condition_dataset(condition, profile_name="KEGG_KOs", batch=None):
-    
-    metadata = read_metadata()
-    
+def build_condition_dataset(condition, profile_name="KEGG_KOs", batch=None, ext="tsv"):
+
+    ext_common = ext
+    if ext in ["jbl", "bin", "pickle"]:
+        ext_common = "jbl"
+
+    metadata = read_metadata(ext_common)
+
     condition_query = metadata["DISEASE"] == condition
     projects = metadata.loc[condition_query, "SECONDARY_STUDY_ID"].unique()
     project_query = metadata["SECONDARY_STUDY_ID"].isin(projects)
-    
+
     metadata = metadata.loc[project_query, :]
-    
+
     if batch is None:
-        fname = f'{profile_name}.tsv'
+        fname = f"{profile_name}.{ext_common}"
     else:
-        fname = f"{profile_name}_{batch}.tsv"
-    
+        fname = f"{profile_name}_{batch}.{ext_common}"
+
     fpath = PROCESSED_DATA_PATH.joinpath(fname)
-    features = pd.read_csv(fpath, sep="\t", index_col="ENA-SAMPLE")
-    
+    if ext_common == "tsv":
+        features = pd.read_csv(fpath, sep="\t", index_col="ENA-SAMPLE")
+    else:
+        features = joblib.load(fpath)
+
     features = features.loc[project_query, :]
-    
+
     return features, metadata
+
+
+def get_egg_filter():
+    egg_filter = [
+        "acoNOG",
+        "apiNOG",
+        "artNOG",
+        "aveNOG",
+        "biNOG",
+        "chorNOG",
+        "chrNOG",
+        "cocNOG",
+        "cryNOG",
+        "dipNOG",
+        "droNOG",
+        "euNOG_KOG",
+        "fiNOG",
+        "haeNOG",
+        "homNOG",
+        "hymNOG",
+        "inNOG",
+        "kinNOG",
+        "lepNOG",
+        "maNOG",
+        "meNOG",
+        "nemNOG",
+        "NOG_COG",
+        "opiNOG",
+        "perNOG",
+        "prNOG",
+        "rhaNOG",
+        "roNOG",
+        "spriNOG",
+        "veNOG",
+    ]
+
+    return egg_filter
+
+
+def filter_egg(features):
+    to_filt = get_egg_filter()
+    to_filt = "|".join([x.lower() for x in to_filt])
+
+    features = features.loc[:, ~features.columns.str.lower().str.contains(to_filt)]
+
+    return features
 
 
 if __name__ == "__main__":

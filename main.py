@@ -17,13 +17,13 @@ random.seed(SEED)
 np.random.seed(SEED)
 
 
-def build_data_sources(profiles=["KEGG_KOs", "centrifuge", "OGs"],ext="jbl"):
+def build_data_sources(profiles=["KEGG_KOs", "centrifuge", "OGs"], ext="jbl"):
     """[summary]
     """
     metadata = datasets.build_metadata()
     metadata, features_dict = datasets.build_features(metadata, profiles)
-    datasets.write_metadata(metadata)
-    datasets.write_features(features_dict)
+    datasets.write_metadata(metadata, ext=ext)
+    datasets.write_features(features_dict, ext=ext)
 
 
 def main(condition, profile_name, build_data=True, sync=True, debug=True, ext="jbl"):
@@ -45,11 +45,11 @@ def main(condition, profile_name, build_data=True, sync=True, debug=True, ext="j
         subprocess.run(["sh", "mlgut/sync_data.sh"])
     if build_data:
         print("Build Data sources.")
-        build_data_sources()
-    if debug:
+        build_data_sources(ext=ext)
+    if not debug:
         filter_warnings()
     if profile_name is not None:
-        train_interpreter(condition, profile_name)
+        train_interpreter(condition, profile_name, ext=ext)
 
 
 def filter_warnings():
@@ -60,7 +60,7 @@ def filter_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
 
 
-def train_interpreter(condition, profile_name):
+def train_interpreter(condition, profile_name, ext):
     """[summary]
 
     Parameters
@@ -73,10 +73,12 @@ def train_interpreter(condition, profile_name):
     import pandas as pd
 
     print(f"Building datasets for {condition} condition and profile {profile_name}")
-    features, metadata = datasets.build_condition_dataset(condition, profile_name)
-    query = features.columns.str.lower().str.contains("bactNOG")
-    features = features.loc[:, query]
-    #TODO: filter it with a CLI option
+    features, metadata = datasets.build_condition_dataset(
+        condition, profile_name, ext=ext
+    )
+    features = datasets.filter_egg(features)
+
+    # TODO: filter it with a CLI option
     # tax_id = "9606"
     # print(tax_id in features.columns)
     # features = features.drop(tax_id, axis=1)
@@ -84,7 +86,7 @@ def train_interpreter(condition, profile_name):
     # features = pd.concat((features, features2), axis=1)
     model = models.get_model(profile_name)
     print(model)
-   
+
     print("\t Cross-project analysis.")
     train.perform_crossproject_analysis(
         features, metadata, model, profile_name, condition
@@ -115,4 +117,11 @@ def train_interpreter(condition, profile_name):
 if __name__ == "__main__":
     condition = "CRC"
     profile_name = "OGs"
-    main(condition, profile_name=None, build_data=True, sync=False, debug=True)
+    main(
+        condition,
+        profile_name=None,
+        build_data=True,
+        sync=False,
+        debug=False,
+        ext="jbl",
+    )
