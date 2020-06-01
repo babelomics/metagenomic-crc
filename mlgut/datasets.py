@@ -19,6 +19,8 @@ PROJECT_PATH = get_path("project")
 PROCESSED_DATA_PATH = get_path("processed")
 RAW_DATA_PATH = get_path("raw")
 
+DISEASE_LIST = ["crc"]
+
 
 def read_metadata_frame(fpath: Path) -> pd.DataFrame:
     """[summary]
@@ -220,7 +222,12 @@ def build_condition_dataset(condition, profile_name="KEGG_KOs", batch=None, ext=
 
     metadata = read_metadata(ext_common)
 
-    condition_query = metadata["DISEASE"] == condition
+    if condition.lower() in DISEASE_LIST:
+        condition_query = metadata["DISEASE"] == condition
+    else:
+        condition_query = (
+            metadata["DISEASE"].str.lower().str.contains(condition.lower())
+        )
     projects = metadata.loc[condition_query, "SECONDARY_STUDY_ID"].unique()
     project_query = metadata["SECONDARY_STUDY_ID"].isin(projects)
 

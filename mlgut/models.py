@@ -168,7 +168,7 @@ def get_kegg_model(selector=True, lopo=False) -> Pipeline:
     return model
 
 
-def get_ogs_model(selector=True, lopo=False) -> Pipeline:
+def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
     """[summary]
 
     Parameters
@@ -185,7 +185,7 @@ def get_ogs_model(selector=True, lopo=False) -> Pipeline:
         model = Pipeline(
             [
                 ("transformer", FunctionTransformer(np.log1p)),
-                ("discretizer", KBinsDiscretizer(n_bins=4, encode="ordinal")),
+                ("discretizer", KBinsDiscretizer(n_bins=k, encode="ordinal")),
                 ("selector", SelectFpr()),
                 (
                     "estimator",
@@ -200,7 +200,7 @@ def get_ogs_model(selector=True, lopo=False) -> Pipeline:
             model = Pipeline(
                 [
                     ("transformer", FunctionTransformer(np.log1p)),
-                    ("discretizer", KBinsDiscretizer(n_bins=4, encode="ordinal")),
+                    ("discretizer", KBinsDiscretizer(n_bins=k, encode="ordinal")),
                     ("selector", SelectFdr()),
                     (
                         "estimator",
@@ -215,7 +215,7 @@ def get_ogs_model(selector=True, lopo=False) -> Pipeline:
         model = Pipeline(
             [
                 ("transformer", FunctionTransformer(np.log1p)),
-                ("discretizer", KBinsDiscretizer(n_bins=4, encode="ordinal")),
+                ("discretizer", KBinsDiscretizer(n_bins=k, encode="ordinal")),
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
