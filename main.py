@@ -115,12 +115,14 @@ def train_interpreter(condition, profile_name, ext):
 
 
 if __name__ == "__main__":
-    condition = "CRC"
-    profile_name = "OGs"
+    import sys
+
+    _, condition, profile_name = sys.argv
+
     main(
         condition,
-        profile_name=None,
-        build_data=True,
+        profile_name=profile_name,
+        build_data=False,
         sync=False,
         debug=False,
         ext="jbl",
