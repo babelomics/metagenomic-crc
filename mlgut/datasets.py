@@ -8,12 +8,11 @@ Data manipulation module.
 import json
 from pathlib import Path
 
+import joblib
 import numpy as np
 import pandas as pd
 
 from mlgut.utils import get_path
-import joblib
-
 
 PROJECT_PATH = get_path("project")
 PROCESSED_DATA_PATH = get_path("processed")

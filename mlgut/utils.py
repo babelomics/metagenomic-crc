@@ -6,10 +6,9 @@ email: carlos.loucera@juntadeandalucia.es
 Utiity functions.
 """
 from pathlib import Path
+
 import dotenv
 from ete3 import NCBITaxa
-
-
 
 DOTENV_FILE = dotenv.find_dotenv()
 

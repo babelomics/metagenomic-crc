@@ -6,14 +6,15 @@ email: carlos.loucera@juntadeandalucia.es
 ML models module.
 """
 import numpy as np
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer, KBinsDiscretizer
-from sklearn.feature_selection import SelectFpr, SelectFdr
+import pandas as pd
 from interpret.glassbox import ExplainableBoostingClassifier
 from scipy.spatial.distance import pdist
-from mlgut.rbo import rbo_dict
-import pandas as pd
 from sklearn import metrics
+from sklearn.feature_selection import SelectFdr, SelectFpr
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer, KBinsDiscretizer
+
+from mlgut.rbo import rbo_dict
 
 
 def get_model(profile: str, selector=True, lopo=False) -> Pipeline:

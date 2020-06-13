@@ -33,7 +33,6 @@ import math
 from bisect import bisect_left
 from collections import namedtuple
 
-
 RBO = namedtuple("RBO", "min res ext")
 RBO.__doc__ += ": Result of full RBO analysis"
 RBO.min.__doc__ = "Lower bound estimate"

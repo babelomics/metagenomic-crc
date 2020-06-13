@@ -19,9 +19,10 @@ NB: This package requires the installation of the packages: numpy, scipy and mat
 
 """
 
+import math
+
 import numpy as np
 from scipy.stats import norm
-import math
 
 
 def getStability(Z):
