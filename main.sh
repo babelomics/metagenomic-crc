@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
+
 condition="CRC"
 profile="OGs"
-job_name="mlgut${profile_name}"
-path="data/paper/${condition}_${profile_name}"
+job_name="mlgut${profile}"
+path="data/paper/${condition}_${profile}"
 mkdir -p ${path}
 err="${path}/log.err"
 out="${path}/log.out"
