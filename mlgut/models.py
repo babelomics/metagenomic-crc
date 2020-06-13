@@ -185,7 +185,6 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
         model = Pipeline(
             [
                 ("transformer", FunctionTransformer(np.log1p)),
-                ("discretizer", KBinsDiscretizer(n_bins=k, encode="ordinal")),
                 ("selector", SelectFpr()),
                 (
                     "estimator",
@@ -193,6 +192,7 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
                         n_estimators=32, n_jobs=-1, random_state=42
                     ),
                 ),
+                ("discretizer", KBinsDiscretizer(n_bins=k, encode="ordinal")),
             ]
         )
 
@@ -200,7 +200,6 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
             model = Pipeline(
                 [
                     ("transformer", FunctionTransformer(np.log1p)),
-                    ("discretizer", KBinsDiscretizer(n_bins=k, encode="ordinal")),
                     ("selector", SelectFdr()),
                     (
                         "estimator",
@@ -208,6 +207,7 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
                             n_estimators=32, n_jobs=-1, random_state=42
                         ),
                     ),
+                    ("discretizer", KBinsDiscretizer(n_bins=k, encode="ordinal"))
                 ]
             )
 
