@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 condition="CRC"
 profile="OGs"
 job_name="mlgut${profile_name}"
