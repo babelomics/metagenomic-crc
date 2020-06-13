@@ -5,25 +5,20 @@ email: carlos.loucera@juntadeandalucia.es
 
 Analise pre-trained models.
 """
-import csv
 import joblib
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
 from scipy import stats
+from sklearn import metrics
+from sklearn.model_selection import LeaveOneGroupOut
+
 import mlgut.stability as stab
 from mlgut import utils
 from mlgut.datasets import get_path
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from mlgut.models import (
-    compute_rbo_mat,
-    compute_support_ebm,
-    get_lopo_support,
-    get_cp_support,
-)
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn import metrics
-
+from mlgut.models import (compute_rbo_mat, compute_support_ebm, get_cp_support,
+                          get_lopo_support)
 
 EXTENSIONS = ["pdf", "png", "svg"]
 
@@ -40,7 +35,6 @@ PROJECT_NAMES_DICT = {
 PROJECT_ORDER = sorted(PROJECT_NAMES_DICT.values())
 DISEASE_COLUMN_NAME = "DISEASE"
 PROJECT_COLUMN_NAME = "SECONDARY_STUDY_ID"
-RESULTS_PATH = get_path("results")
 
 
 def load_crossproject(condition, profile, path):
@@ -324,9 +318,7 @@ def plot_scores(mat, condition, profile, path):
         yticklabels=True,
     )
     ax.xaxis.set_ticks_position("top")
-    ax.set_xticklabels(
-        ax.get_xticklabels(), rotation=45
-    )
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
     for ext in EXTENSIONS:
         fname = f"{condition}_{profile}_score_matrix.{ext}"
         fpath = path.joinpath(fname)
@@ -364,7 +356,7 @@ def build_analysis(features, metadata, profile, condition, control, path):
     cp_fi.to_csv(path.joinpath(f"{condition}_{profile}_cp_support.tsv"), sep="\t")
     cp_fi_merged.to_csv(
         path.joinpath(f"{condition}_{profile}_cp_support_merge.tsv"), sep="\t"
-    )  
+    )
 
     lopo_wo_oracle, support_lopo_wo_oracle = analyze_lopo_wo_oracle(
         results_lopo_wo_oracle, features, metadata, profile, condition, control
@@ -386,7 +378,7 @@ def build_analysis(features, metadata, profile, condition, control, path):
         condition,
         path,
         oracle=True,
-    )   
+    )
 
     analyze_stability(results_stab, results_cp, condition, profile, path)
     analyze_rank_stability(results_cp, features, profile, condition, path)

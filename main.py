@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
-import numpy as np
+import pathlib
 import random
-from mlgut import datasets
-from mlgut import train
-from mlgut import models
-from mlgut import analysis
-from mlgut import utils
 import subprocess
 import warnings
+
+import numpy as np
 from sklearn.exceptions import ConvergenceWarning
 
+from mlgut import analysis, datasets, models, train, utils
 
 SEED = 42
 random.seed(SEED)
@@ -26,7 +24,7 @@ def build_data_sources(profiles=["KEGG_KOs", "centrifuge", "OGs"], ext="jbl"):
     datasets.write_features(features_dict, ext=ext)
 
 
-def main(condition, profile_name, build_data=True, sync=True, debug=True, ext="jbl"):
+def main(condition, profile_name, build_data=True, sync=True, debug=True, ext="jbl", path=None):
     """[summary]
 
     Parameters
@@ -49,7 +47,7 @@ def main(condition, profile_name, build_data=True, sync=True, debug=True, ext="j
     if not debug:
         filter_warnings()
     if profile_name is not None:
-        train_interpreter(condition, profile_name, ext=ext)
+        train_interpreter(condition, profile_name, ext=ext, save_path=path)
 
 
 def filter_warnings():
@@ -60,7 +58,7 @@ def filter_warnings():
     warnings.filterwarnings("ignore", category=FutureWarning)
 
 
-def train_interpreter(condition, profile_name, ext):
+def train_interpreter(condition, profile_name, ext, save_path):
     """[summary]
 
     Parameters
@@ -89,35 +87,35 @@ def train_interpreter(condition, profile_name, ext):
 
     print("\t Cross-project analysis.")
     train.perform_crossproject_analysis(
-        features, metadata, model, profile_name, condition
+        features, metadata, model, profile_name, condition, save=save_path
     )
 
     print("\t LOPO analysis, do not ask the Oracle.")
     model_with_sel = models.get_model(profile_name, selector=True, lopo=True)
     _, oracle = train.perform_lopo(
-        features, metadata, model_with_sel, profile_name, condition
+        features, metadata, model_with_sel, profile_name, condition, save=save_path
     )
 
     print("\t LOPO analysis, ask the Oracle.")
     model_wo_sel = models.get_model(profile_name, selector=False)
     train.perform_lopo(
-        features, metadata, model_wo_sel, profile_name, condition, which_oracle=oracle
+        features, metadata, model_wo_sel, profile_name, condition, which_oracle=oracle, save=save_path
     )
 
     print("\t Stability analysis.")
-    train.perform_stability_analysis(features, metadata, model, profile_name, condition)
+    train.perform_stability_analysis(features, metadata, model, profile_name, condition, save=save_path)
 
-    path = utils.get_path("results")
     print("Analysis")
     analysis.build_analysis(
-        features, metadata, profile_name, condition, "healthy", path
+        features, metadata, profile_name, condition, "healthy", save_path
     )
 
 
 if __name__ == "__main__":
     import sys
 
-    _, condition, profile_name = sys.argv
+    _, condition, profile_name, path = sys.argv
+    path = pathlib.Path(path)
 
     main(
         condition,
@@ -126,4 +124,5 @@ if __name__ == "__main__":
         sync=False,
         debug=False,
         ext="jbl",
+        path=path
     )

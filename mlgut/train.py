@@ -5,20 +5,18 @@ email: carlos.loucera@juntadeandalucia.es
 
 Train functions.
 """
-from mlgut.utils import get_path
-from sklearn.pipeline import Pipeline
+import pathlib
+from typing import Iterable, Tuple
+
+import joblib
 import pandas as pd
 from interpret.glassbox import ExplainableBoostingClassifier
-from sklearn.model_selection import (
-    cross_validate,
-    StratifiedShuffleSplit,
-    LeaveOneGroupOut,
-    RepeatedStratifiedKFold,
-)
-import joblib
-from typing import Tuple, Iterable
 from sklearn.base import clone
+from sklearn.model_selection import (LeaveOneGroupOut, RepeatedStratifiedKFold,
+                                     StratifiedShuffleSplit, cross_validate)
+from sklearn.pipeline import Pipeline
 
+from mlgut.utils import get_path
 
 SCORE_LIST = [
     "roc_auc",
@@ -43,7 +41,7 @@ def perform_stability_analysis(
     control="healthy",
     n_splits=100,
     frac_samples=0.7,
-    save=True,
+    save=None,
 ) -> dict:
     """[summary]
 
@@ -106,9 +104,9 @@ def perform_stability_analysis(
         )
         results[project_id] = res
 
-    if save:
+    if save is not None:
         fname = f"{condition}_{profile}_stability.jbl"
-        fpath = RESULTS_PATH.joinpath(fname)
+        fpath = pathlib.Path(save).joinpath(fname)
         joblib.dump(results, fpath)
 
     return results
@@ -121,7 +119,7 @@ def perform_crossproject_analysis(
     profile: str,
     condition: str,
     control="healthy",
-    save=True,
+    save=None,
 ) -> dict:
     """[summary]
 
@@ -198,9 +196,9 @@ def perform_crossproject_analysis(
 
         results[project_id]["cv"] = rescv
 
-    if save:
+    if save is not None:
         fname = f"{condition}_{profile}_cross_project.jbl"
-        fpath = RESULTS_PATH.joinpath(fname)
+        fpath = pathlib.Path(save).joinpath(fname)
         joblib.dump(results, fpath)
 
     return results
@@ -213,7 +211,7 @@ def perform_lopo(
     profile: str,
     condition: str,
     control="healthy",
-    save=True,
+    save=None,
     which_oracle=None,
 ) -> Tuple[dict, pd.DataFrame]:
     """[summary]
@@ -264,7 +262,7 @@ def perform_lopo_wo_oracle(
     profile: str,
     condition: str,
     control="healthy",
-    save=True,
+    save=None,
 ) -> Tuple[dict, pd.DataFrame]:
     """[summary]
 
@@ -310,9 +308,9 @@ def perform_lopo_wo_oracle(
         n_jobs=-1,
     )
 
-    if save:
+    if save is not None:
         fname = f"{condition}_{profile}_lopo_wo_oracle.jbl"
-        fpath = RESULTS_PATH.joinpath(fname)
+        fpath = pathlib.Path(save).joinpath(fname)
         joblib.dump(results, fpath)
 
     support_matrix = [
@@ -331,7 +329,7 @@ def perform_lopo_with_oracle(
     condition: str,
     oracle: pd.DataFrame,
     control="healthy",
-    save=True,
+    save=None,
 ) -> dict:
     """[summary]
 
@@ -391,9 +389,9 @@ def perform_lopo_with_oracle(
         results[i]["cv"] = cv
         results[i]["columns"] = query_cols
 
-    if save:
+    if save is not None:
         fname = f"{condition}_{profile}_lopo_with_oracle.jbl"
-        fpath = RESULTS_PATH.joinpath(fname)
+        pathlib.Path(save).joinpath(fname)
         joblib.dump(results, fpath)
 
     return results, oracle
