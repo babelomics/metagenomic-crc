@@ -16,6 +16,8 @@ from sklearn.preprocessing import FunctionTransformer, KBinsDiscretizer
 
 from mlgut.rbo import rbo_dict
 
+N_CPU = 24
+
 
 def get_model(profile: str, selector=True, lopo=False) -> Pipeline:
     """[summary]
@@ -71,7 +73,7 @@ def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=32, n_jobs=-1, random_state=42
+                        n_estimators=N_CPU, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -86,7 +88,7 @@ def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
                     (
                         "estimator",
                         ExplainableBoostingClassifier(
-                            n_estimators=32, n_jobs=-1, random_state=42
+                            n_estimators=N_CPU, n_jobs=-1, random_state=42
                         ),
                     ),
                 ]
@@ -100,7 +102,7 @@ def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=32, n_jobs=-1, random_state=42
+                        n_estimators=N_CPU, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -131,7 +133,7 @@ def get_kegg_model(selector=True, lopo=False) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=32, n_jobs=-1, random_state=42
+                        n_estimators=N_CPU, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -146,7 +148,7 @@ def get_kegg_model(selector=True, lopo=False) -> Pipeline:
                     (
                         "estimator",
                         ExplainableBoostingClassifier(
-                            n_estimators=32, n_jobs=-1, random_state=42
+                            n_estimators=N_CPU, n_jobs=-1, random_state=42
                         ),
                     ),
                 ]
@@ -160,7 +162,7 @@ def get_kegg_model(selector=True, lopo=False) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=32, n_jobs=-1, random_state=42
+                        n_estimators=N_CPU, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -187,13 +189,13 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
             [
                 ("transformer", FunctionTransformer(np.log1p)),
                 ("selector", SelectFpr()),
+                ("discretizer", KBinsDiscretizer(n_bins=k, encode="ordinal")),
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=32, n_jobs=-1, random_state=42
+                        n_estimators=N_CPU, n_jobs=-1, random_state=42
                     ),
                 ),
-                ("discretizer", KBinsDiscretizer(n_bins=k, encode="ordinal")),
             ]
         )
 
@@ -202,13 +204,13 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
                 [
                     ("transformer", FunctionTransformer(np.log1p)),
                     ("selector", SelectFdr()),
+                    ("discretizer", KBinsDiscretizer(n_bins=k, encode="ordinal")),
                     (
                         "estimator",
                         ExplainableBoostingClassifier(
-                            n_estimators=32, n_jobs=-1, random_state=42
+                            n_estimators=N_CPU, n_jobs=-1, random_state=42
                         ),
                     ),
-                    ("discretizer", KBinsDiscretizer(n_bins=k, encode="ordinal"))
                 ]
             )
 
@@ -220,7 +222,7 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=32, n_jobs=-1, random_state=42
+                        n_estimators=N_CPU, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
