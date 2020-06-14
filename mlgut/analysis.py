@@ -203,6 +203,9 @@ def analyze_rank_stability(results, features, profile, condition, path):
     }
 
     dmat = pd.DataFrame(dmat).melt(value_name="dRBO", var_name="Project")
+    fname = f"{condition}_{profile}_rank_stability_mat.jbl"
+    fpath = path.joinpath(fname)
+    joblib.dump(dmat, fpath)
 
     plt.figure(figsize=(16, 9))
     sns.violinplot(x="Project", y="dRBO", data=dmat, order=PROJECT_ORDER)
