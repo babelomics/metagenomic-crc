@@ -245,11 +245,11 @@ def perform_lopo(
 
     if which_oracle in [None, False]:
         results, oracle = perform_lopo_wo_oracle(
-            features, metadata, model, profile, condition, control
+            features, metadata, model, profile, condition, control, save
         )
     else:
         results, oracle = perform_lopo_with_oracle(
-            features, metadata, model, profile, condition, which_oracle, control
+            features, metadata, model, profile, condition, which_oracle, control, save
         )
 
     return results, oracle
@@ -391,7 +391,7 @@ def perform_lopo_with_oracle(
 
     if save is not None:
         fname = f"{condition}_{profile}_lopo_with_oracle.jbl"
-        pathlib.Path(save).joinpath(fname)
+        fpath = pathlib.Path(save).joinpath(fname)
         joblib.dump(results, fpath)
 
     return results, oracle
