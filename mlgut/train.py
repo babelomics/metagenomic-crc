@@ -6,14 +6,18 @@ email: carlos.loucera@juntadeandalucia.es
 Train functions.
 """
 import pathlib
-from typing import Iterable, Tuple
+from typing import Tuple
 
 import joblib
 import pandas as pd
 from interpret.glassbox import ExplainableBoostingClassifier
 from sklearn.base import clone
-from sklearn.model_selection import (LeaveOneGroupOut, RepeatedStratifiedKFold,
-                                     StratifiedShuffleSplit, cross_validate)
+from sklearn.model_selection import (
+    LeaveOneGroupOut,
+    RepeatedStratifiedKFold,
+    StratifiedShuffleSplit,
+    cross_validate,
+)
 from sklearn.pipeline import Pipeline
 
 from mlgut.utils import get_path

@@ -17,8 +17,12 @@ from sklearn.model_selection import LeaveOneGroupOut
 import mlgut.stability as stab
 from mlgut import utils
 from mlgut.datasets import get_path
-from mlgut.models import (compute_rbo_mat, compute_support_ebm, get_cp_support,
-                          get_lopo_support)
+from mlgut.models import (
+    compute_rbo_mat,
+    compute_support_ebm,
+    get_cp_support,
+    get_lopo_support,
+)
 
 EXTENSIONS = ["pdf", "png", "svg"]
 

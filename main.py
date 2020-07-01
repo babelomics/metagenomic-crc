@@ -86,9 +86,9 @@ def train_interpreter(condition, profile_name, ext, save_path):
     print(model)
 
     print("\t Cross-project analysis.")
-    # train.perform_crossproject_analysis(
-    #     features, metadata, model, profile_name, condition, save=save_path
-    # )
+    train.perform_crossproject_analysis(
+        features, metadata, model, profile_name, condition, save=save_path
+    )
 
     print("\t LOPO analysis, do not ask the Oracle.")
     model_with_sel = models.get_model(profile_name, selector=True, lopo=True)
@@ -103,7 +103,7 @@ def train_interpreter(condition, profile_name, ext, save_path):
     )
 
     print("\t Stability analysis.")
-    # train.perform_stability_analysis(features, metadata, model, profile_name, condition, save=save_path)
+    train.perform_stability_analysis(features, metadata, model, profile_name, condition, save=save_path)
 
     print("Analysis")
     analysis.build_analysis(

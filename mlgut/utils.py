@@ -100,11 +100,13 @@ def get_results_path() -> Path:
 
     return path
 
+
 def get_ncbi() -> NCBITaxa:
     # builds database on first call
     ncbi = NCBITaxa()
 
     return ncbi
+
 
 def rename_keys(d, keys):
     return dict([(keys.get(k), v) for k, v in d.items()])

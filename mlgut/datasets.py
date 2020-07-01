@@ -5,7 +5,6 @@ email: carlos.loucera@juntadeandalucia.es
 
 Data manipulation module.
 """
-import json
 from pathlib import Path
 
 import joblib
