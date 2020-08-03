@@ -26,7 +26,7 @@ from mlgut.models import (
     get_lopo_support,
 )
 
-MODELS = ["oLOPO_withSignature"]
+MODELS = ["LOPO", "oLOPO_withCrossSupport", "oLOPO_withSignature"]
 DISEASE_COLUMN_NAME = "DISEASE"
 PROJECT_COLUMN_NAME = "SECONDARY_STUDY_ID"
 
@@ -85,8 +85,9 @@ def remove_iqr(features, threshold=0.0):
 
 def get_olopo_with_support(profile_name, modus, X, y, g):
     if modus == "signature":
-        X = remove_iqr(X)
-        X = remove_healthy_batch(X, y, g)
+        if profile_name != "centrifuge":
+            X = remove_iqr(X)
+            X = remove_healthy_batch(X, y, g)
         k = 600 if 600 < (X.shape[1]) else X.shape[1]
         selector = skfs.SelectKBest(k=k).fit(X, y)
         support = selector.get_support()
