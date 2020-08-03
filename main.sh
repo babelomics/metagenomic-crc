@@ -7,7 +7,7 @@ declare -a profiles=( "OGs" "centrifuge" "KEGG_KOs" )
 
 for profile in "${profiles[@]}"; do
 
-    job_name="mlgut_$condition$_${profile}_${mode}"
+    job_name="mlgut_${condition}_${profile}_${mode}"
     path="data/paper/${condition}_${profile}"
     mkdir -p ${path}
     err="${path}/${job_name}.err"
@@ -16,6 +16,7 @@ for profile in "${profiles[@]}"; do
     if [[ "$mode" == "train" ]]; then
         sbatch -J ${job_name} -N 1 -c 24 -e $err -o $out --wrap="ml anaconda2; conda activate ./.venv; python main.py ${condition} ${profile} ${path}"
     else
+        echo $profile
         sbatch -J ${job_name} -N 1 -c 24 -e $err -o $out --wrap="ml anaconda2; conda activate ./.venv; python significance.py ${condition} ${profile} ${path}"
     fi
 done
