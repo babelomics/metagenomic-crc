@@ -5,43 +5,52 @@ email: carlos.loucera@juntadeandalucia.es
 
 Run LOPO significance anlysis.
 """
-import joblib
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import seaborn as sns
-from scipy import stats
-from sklearn import metrics
-from sklearn import model_selection as skms
+import pathlib
+import sys
 
-import mlgut.stability as stab
-from mlgut import utils
+import joblib
+import numpy as np
+from interpret.glassbox import ExplainableBoostingClassifier
+from sklearn import feature_selection as skfs
+from sklearn import model_selection as skms
+from sklearn.base import clone
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer
+
 from mlgut import datasets
-from mlgut import models
-from mlgut.datasets import get_path
 from mlgut.models import (
     compute_rbo_mat,
     compute_support_ebm,
     get_cp_support,
     get_lopo_support,
 )
-import sys
-
-from sklearn.compose import ColumnTransformer
-from sklearn.base import clone
-from sklearn import feature_selection as skfs
-from sklearn.pipeline import Pipeline
-import pathlib
-
 
 MODELS = ["oLOPO_withSignature"]
 DISEASE_COLUMN_NAME = "DISEASE"
 PROJECT_COLUMN_NAME = "SECONDARY_STUDY_ID"
 
+N_CPU = 24
+
 
 def get_lopo_model(model_name, profile_name, X, y, g):
     if model_name == "LOPO":
-        model = models.get_model(profile=profile_name, selector=True, lopo=True)
+        n_bins = 2 if profile_name == "centrifuge" else 20
+        model = Pipeline(
+            [
+                ("transformer", FunctionTransformer(np.log1p)),
+                ("selector", skfs.SelectFdr()),
+                (
+                    "estimator",
+                    ExplainableBoostingClassifier(
+                        n_estimators=N_CPU,
+                        n_jobs=-1,
+                        random_state=42,
+                        max_n_bins=n_bins,
+                    ),
+                ),
+            ]
+        )
     elif model_name == "oLOPO_withCrossSupport":
         model = get_olopo_with_support(profile_name, "project", X, y, g)
     elif model_name == "oLOPO_withSignature":
@@ -53,6 +62,7 @@ def get_lopo_model(model_name, profile_name, X, y, g):
 
 
 def remove_healthy_batch(features, y, g, selector=skfs.SelectFdr()):
+    selector = clone(selector)
     healthy_query = y == False
     features_healthy = features.loc[healthy_query, :]
     label = g[healthy_query]
@@ -74,38 +84,45 @@ def remove_iqr(features, threshold=0.0):
 
 
 def get_olopo_with_support(profile_name, modus, X, y, g):
-
-    support = []
-
     if modus == "signature":
-        X = X.apply(np.log1p)
         X = remove_iqr(X)
         X = remove_healthy_batch(X, y, g)
-
-    for project in g:
-        query = g == project
-        if modus == "signature":
-            k = 100 if 100 < (X.shape[1]) else X.shape[1]
-            selector = skfs.SelectKBest(k=k)
-        elif modus == "project":
+        k = 600 if 600 < (X.shape[1]) else X.shape[1]
+        selector = skfs.SelectKBest(k=k).fit(X, y)
+        support = selector.get_support()
+    else:
+        support = []
+        for project in g:
+            query = g == project
             if project in ["Hannigan", "PRJNA389927"]:
                 selector = skfs.SelectFpr()
             else:
                 selector = skfs.SelectFdr()
-        else:
-            raise NotImplementedError()
+            selector.fit(X.loc[query, :], y.loc[query])
+            support.append(selector.get_support())
 
-        selector.fit(X.loc[query, :], y.loc[query])
-        support.append(selector.get_support())
+            support = np.array(support).any(axis=0)
 
-    support = np.array(support).any(axis=0)
     columns_to_keep = X.columns[support]
+    print(columns_to_keep.size)
 
     trans = ColumnTransformer(
         [("select_columns", "passthrough", columns_to_keep)], remainder="drop",
     )
 
-    model = models.get_model(profile=profile_name, selector=False, lopo=True)
+    n_bins = 2 if profile_name == "centrifuge" else 20
+
+    model = Pipeline(
+        [
+            ("transformer", FunctionTransformer(np.log1p)),
+            (
+                "estimator",
+                ExplainableBoostingClassifier(
+                    n_estimators=N_CPU, n_jobs=-1, random_state=42, max_n_bins=n_bins
+                ),
+            ),
+        ]
+    )
 
     pipe = Pipeline(steps=[("trans", trans), ("model", model)])
 
@@ -143,7 +160,6 @@ def save_results(results, path):
 
 
 def train_profile(condition, profile_name, path):
-    print(condition, profile_name, path)
     features, metadata = datasets.build_condition_dataset(
         condition, profile_name, ext="jbl"
     )
