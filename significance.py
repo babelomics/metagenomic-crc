@@ -85,7 +85,8 @@ def get_olopo_with_support(profile_name, modus, X, y, g):
     for project in g:
         query = g == project
         if modus == "signature":
-            selector = skfs.SelectKBest(k=100)
+            k = 100 if 100 < (X.shape[1]) else X.shape[1]
+            selector = skfs.SelectKBest(k=k)
         elif modus == "project":
             if project in ["Hannigan", "PRJNA389927"]:
                 selector = skfs.SelectFpr()
