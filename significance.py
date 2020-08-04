@@ -160,7 +160,7 @@ def save_results(results, path):
     joblib.dump(results, fpath)
 
 
-def train_profile(condition, profile_name, path):
+def train_profile(condition, profile_name, model_name, path):
     features, metadata = datasets.build_condition_dataset(
         condition, profile_name, ext="jbl"
     )
@@ -173,19 +173,18 @@ def train_profile(condition, profile_name, path):
     y = ~metadata.loc[query, DISEASE_COLUMN_NAME].str.lower().str.contains("healthy")
     g = metadata.loc[query, PROJECT_COLUMN_NAME]
 
-    for model_name in MODELS:
-        results = train_model(model_name, profile_name, X, y, g)
-        results["condition"] = condition
-        save_results(results, path)
+    results = train_model(model_name, profile_name, X, y, g)
+    results["condition"] = condition
+    save_results(results, path)
 
 
 def run_plot(condition, profiles, path):
     pass
 
 
-def run(condition, profile, mode, path):
+def run(condition, profile, mode, model_name, path):
     if mode == "train":
-        train_profile(condition, profile, path)
+        train_profile(condition, profile, model_name, path)
     elif mode == "plot":
         run_plot(condition, profile, path)
     else:
@@ -193,7 +192,7 @@ def run(condition, profile, mode, path):
 
 
 if __name__ == "__main__":
-    _, condition, profile, mode, path = sys.argv
+    _, condition, profile, mode, model_name, path = sys.argv
     path = pathlib.Path(path)
 
-    run(condition, profile, mode, path)
+    run(condition, profile, mode, model_name, path)
