@@ -99,6 +99,7 @@ def get_olopo_with_support(profile_name, modus, X, y, g):
             #     selector = skfs.SelectFpr()
             # else:
             #     selector = skfs.SelectFdr()
+            selector = skfs.SelectFdr()
             selector.fit(X.loc[query, :], y.loc[query])
             support.append(selector.get_support())
 
