@@ -102,7 +102,7 @@ def get_olopo_with_support(profile_name, modus, X, y, g):
             selector.fit(X.loc[query, :], y.loc[query])
             support.append(selector.get_support())
 
-            support = np.array(support).any(axis=0)
+        support = np.array(support).any(axis=0)
 
     columns_to_keep = X.columns[support]
     print(columns_to_keep.size)
@@ -134,7 +134,7 @@ def train_model(model_name, profile_name, X, y, g):
     model = get_lopo_model(model_name, profile_name, X, y, g)
     cv = skms.LeaveOneGroupOut().split(X, y, groups=g)
     score, permutation_scores, pvalue = skms.permutation_test_score(
-        model, X, y, scoring="roc_auc", cv=cv, n_permutations=100, n_jobs=-1
+        clone(model), X, y, scoring="roc_auc", cv=cv, n_permutations=100, n_jobs=-1
     )
 
     results = {
