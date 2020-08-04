@@ -38,8 +38,8 @@ def get_lopo_model(model_name, profile_name, X, y, g):
         n_bins = 2 if profile_name == "centrifuge" else 20
         model = Pipeline(
             [
+                ("selector", skfs.SelectKBest(k=600)),
                 ("transformer", FunctionTransformer(np.log1p)),
-                ("selector", skfs.SelectFdr()),
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
