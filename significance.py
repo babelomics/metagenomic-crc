@@ -94,11 +94,11 @@ def get_olopo_with_support(profile_name, modus, X, y, g):
     else:
         support = []
         for project in g:
-            query = g == project
-            if project in ["Hannigan", "PRJNA389927"]:
-                selector = skfs.SelectFpr()
-            else:
-                selector = skfs.SelectFdr()
+            query = g != project
+            # if project in ["Hannigan", "PRJNA389927"]:
+            #     selector = skfs.SelectFpr()
+            # else:
+            #     selector = skfs.SelectFdr()
             selector.fit(X.loc[query, :], y.loc[query])
             support.append(selector.get_support())
 
