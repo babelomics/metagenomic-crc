@@ -57,7 +57,7 @@ def main(condition, profile_name, results_path):
     )
 
     folder_path = pathlib.Path(results_path)
-    best_path = folder_path.joibpath(f"{condition}_{profile_name}_cp_support_merge.tsv")
+    best_path = folder_path.joinpath(f"{condition}_{profile_name}_cp_support_merge.tsv")
 
     d = pd.read_csv(best_path, sep="\t", index_col=0)
     d = d.iloc[:, 0]
