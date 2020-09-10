@@ -3,7 +3,7 @@
 author: Carlos Loucera
 email: carlos.loucera@juntadeandalucia.es
 
-Run LOPO significance anlysis.
+Run LOPO significance analysis.
 """
 import pathlib
 import sys
