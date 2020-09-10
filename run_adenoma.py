@@ -14,6 +14,12 @@ import pandas as pd
 import seaborn as sns
 from scipy.stats import linregress
 from sklearn.model_selection import train_test_split
+from interpret.glassbox import ExplainableBoostingClassifier
+from scipy.stats import rankdata
+from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
+from interpret.glassbox import ExplainableBoostingClassifier
+from scipy import stats
+import joblib
 
 from mlgut import datasets, models
 
@@ -36,18 +42,20 @@ EXTENSIONS = ["pdf", "png", "svg"]
 
 def fdr(p_vals):
 
-    from scipy.stats import rankdata
-
     ranked_p_values = rankdata(p_vals)
-    fdr = p_vals * len(p_vals) / ranked_p_values
-    fdr[fdr > 1] = 1
+    p_vals_new = p_vals * len(p_vals) / ranked_p_values
+    p_vals_new[p_vals_new > 1] = 1
 
-    return fdr
+    return p_vals_new
 
 
 def main(condition, profile_name, results_path):
     features, metadata = datasets.build_condition_dataset(
         condition, profile_name, ext="jbl"
+    )
+
+    _, metadata_adenoma = datasets.build_condition_dataset(
+        "adenoma", profile_name, ext="jbl"
     )
 
     if "ogs" in profile_name.lower():
@@ -57,11 +65,14 @@ def main(condition, profile_name, results_path):
         PROJECT_NAMES_DICT
     )
 
+    metadata_adenoma[PROJECT_COLUMN_NAME] = metadata_adenoma[
+        PROJECT_COLUMN_NAME
+    ].replace(PROJECT_NAMES_DICT)
+
     folder_path = pathlib.Path(results_path)
     best_path = folder_path.joinpath(f"{condition}_{profile_name}_cp_support_merge.tsv")
 
-    d = pd.read_csv(best_path, sep="\t", index_col=0)
-    d = d.iloc[:, 0]
+    d = pd.read_csv(best_path, sep="\t", index_col=0).iloc[:, 0]
     columns = d[d > 0.0].index.astype(str)
 
     features = features.apply(np.log1p)
@@ -158,7 +169,7 @@ def main(condition, profile_name, results_path):
         fig_path = folder_path.joinpath(
             f"{condition}_{profile_name}_adenoma_distribution.{ext}"
         )
-    plt.savefig(fig_path, dpi=300, bbox_inches="tight", pad_inches=0)
+        plt.savefig(fig_path, dpi=300, bbox_inches="tight", pad_inches=0)
     plt.close()
 
     adenoma_interpret_query = data.index[data[DISEASE_COLUMN_NAME] == "Adenoma"]
@@ -201,6 +212,95 @@ def main(condition, profile_name, results_path):
         f"{condition}_{profile_name}_adenoma_explanations.tsv"
     )
     adenoma_analysis.to_csv(dataset_fpath, sep="\t", index_label="feature_id")
+    
+    ###################################################################
+
+    query_ = metadata.DISEASE.isin([condition, "healthy"])
+    disease_train = metadata.DISEASE[query_]
+    y_ = metadata.DISEASE[query_] == condition
+    X_ = features.loc[query_, :]
+    g = metadata.loc[query_, PROJECT_COLUMN_NAME]
+    metadata_adenoma = metadata.loc[~query_, :].copy()
+
+    X_ = features.loc[query_, columns]
+
+    small_l_healthy = []
+    small_g_healthy = []
+    healthy_l_adenoma = []
+    small_l_adenoma = []
+
+    n_split = 100
+
+    for i in range(n_split):
+        X_train, X_val, y_train, y_val = train_test_split(X_, disease_train, test_size=0.30, random_state=i, stratify=y_)
+        y_train = y_train == condition
+
+        #model = models.get_taxonomic_model(lopo=True, selector=True)
+        model = ExplainableBoostingClassifier(n_estimators=32, n_jobs=-1, max_n_bins=n_bins)
+        model.fit(X_train, y_train)
+
+        X_test = features.loc[~query_, X_.columns]
+        y_test = metadata.DISEASE[~query_]
+
+        new_metadata = pd.concat((metadata, metadata_adenoma), axis=0)
+        #new_metadata = new_metadata.loc[new_metadata.index.drop_duplicates(keep="first"), :]
+        new_metadata.drop_duplicates(inplace=True)
+
+        probas_test = model.predict_proba(X_test)[:, 1]
+        probas_test = pd.Series(probas_test, index=y_test.index, name="proba")
+        data_test = pd.concat((probas_test, y_test), axis=1)
+
+        probas_val = model.predict_proba(X_val)[:, 1]
+        probas_val = pd.Series(probas_val, index=y_val.index, name="proba")
+        data_val = pd.concat((probas_val, y_val), axis=1)
+
+        data = pd.concat((data_val, data_test), axis=0)
+        #data = pd.concat((data, new_metadata[PROJECT_COLUMN_NAME]), axis=1, join="inner")
+        data["Project"] = new_metadata.loc[data.index, PROJECT_COLUMN_NAME]
+
+        query = data.DISEASE.str.lower().str.contains("metastases")
+        data.DISEASE[query] = "Metastases"
+
+        query = data.DISEASE.str.contains("CRC;")
+        data.DISEASE[query] = "CRC + Others"
+
+        query = data.DISEASE.str.contains("adenoma;")
+        data.DISEASE[query] = "Adenoma + Others"
+
+        query = data.DISEASE.str.lower().str.contains("small")
+        data.DISEASE[query] = "Small Adenoma"
+
+        query = data.DISEASE.str.lower().str.contains("adenoma") & ~data.DISEASE.str.lower().str.contains("small|others")
+        data.DISEASE[query] = "Adenoma"
+
+        query = data.DISEASE.str.contains("T2D")
+        data.DISEASE[query] = "T2D + Others (non CRC)"
+
+
+        small = data.loc[data.DISEASE == "Small Adenoma", "proba"]
+        healthy = data.loc[data.DISEASE == "healthy", "proba"]
+        adenoma = data.loc[data.DISEASE == "Adenoma", "proba"]
+
+        #print(stats.ttest_ind(small, healthy, equal_var=False))
+        #print(stats.ttest_ind(adenoma, healthy, equal_var=False))
+        #print(stats.ttest_ind(small, adenoma, equal_var=False))
+
+        small_l_healthy.append(stats.mannwhitneyu(small, healthy, use_continuity=True, alternative="less"))
+        small_g_healthy.append(stats.mannwhitneyu(small, healthy, use_continuity=True, alternative="greater"))
+        healthy_l_adenoma.append(stats.mannwhitneyu(healthy, adenoma, use_continuity=True, alternative="less"))
+        small_l_adenoma.append(stats.mannwhitneyu(small, adenoma, use_continuity=True, alternative="less"))
+        
+    adenoma_mwtest = {
+        "small_l_healthy": small_l_healthy,
+        "small_g_healthy": small_g_healthy,
+        "healthy_l_adenoma": healthy_l_adenoma,
+        "small_l_adenoma": small_l_adenoma
+    }
+    
+    mw_path = folder_path.joinpath(
+        f"{condition}_{profile_name}_adenoma_mwtest.jbl"
+    )
+    joblib.dump(adenoma_mwtest, mw_path)
 
 
 if __name__ == "__main__":
