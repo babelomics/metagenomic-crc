@@ -1,0 +1,52 @@
+#!/usr/bin/env ngless
+ngless "0.9"
+import "mocat" version "0.0"
+import "igc" version "0.9"
+
+rp1 = paired(ARGV[1], ARGV[2])
+rs1 = fastq(ARGV[3])
+input = group([rp1, rs1], name='input')
+
+outdir = ARGV[4]
+
+# filtrado de calidad
+qc_reads = preprocess(input, keep_singles=False) using |read|: 
+    read = substrim(read, min_quality=25)
+    if len(read) < 45:
+        discard
+
+# mapeo con tra el genoma hg19 de humano
+human_mapped = map(qc_reads, reference='hg19') 
+
+# selección de reads que no mapean frente a humano
+non_human = select(human_mapped) using |mr|: 
+    mr = mr.filter(min_match_size=45, min_identity_pc=90, action={unmatch})
+    if mr.flag({mapped}):
+        discard
+non_human_reads = as_reads(non_human)
+
+# mepeao de las reads no humanas frente al fasta de los 9M
+igc_mapped = map(non_human_reads, reference='igc', mode_all=True)
+
+# selección de las read que mapean frente a IGC9M
+igc_mapped_post = select(igc_mapped) using |mr|:
+    mr = mr.filter(min_match_size=45, min_identity_pc=95, action={drop})
+    if not mr.flag({mapped}):
+        discard
+
+#KEGG_KOs
+# igc_counts_KO = count(igc_mapped_post,
+#                     features=['KEGG_KOs'],
+#                     multiple={dist1},
+#                     normalization={scaled})
+# write(igc_counts_KO,
+#         ofile=outdir </> 'KEGG_KOs_dist_scaled_counts.tsv',
+#         auto_comments=[{hash}, {script}])
+#OGs
+igc_counts_OG = count(igc_mapped_post,
+                    features=['OGs'],
+                    multiple={dist1},
+                    normalization={scaled})
+write(igc_counts_OG,
+        ofile=outdir </> 'OGs_dist_scaled_counts.tsv',
+        auto_comments=[{hash}, {script}])

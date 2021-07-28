@@ -1,0 +1,70 @@
+#!/usr/bin/env ngless
+ngless "0.9"
+import "mocat" version "0.0"
+
+reads = paired($ARGV[1], $ARGV[2])
+outdir = ARGV[3]
+
+# filtrado de calidad
+qc_reads = preprocess(input, keep_singles=False) using |read|: 
+    read = substrim(read, min_quality=25)
+    if len(read) < 45:
+        discard
+
+# mapeo con tra el genoma hg19 de humano
+human_mapped = map(qc_reads, reference='hg19') 
+
+# selección de reads que no mapean frente a humano
+non_human = select(human_mapped) using |mr|: 
+    mr = mr.filter(min_match_size=45, min_identity_pc=90, action={unmatch})
+    if mr.flag({mapped}):
+        discard
+non_human_reads = as_reads(non_human)
+
+# mepeao de las reads no humanas frente al fasta de los 11M
+igc_mapped = map(non_human_reads, fafile='/mnt/lustre/scratch/CBRA/research/projects/metagenomic/IGC11M/humanGut_IGC.11M.nucleotide.fa', mode_all=True) # he cambiado la referencia a la de 11M
+
+# selección de las read que mapean frente a IGC11M
+igc_mapped_post = select(igc_mapped) using |mr|:
+    mr = mr.filter(min_match_size=45, min_identity_pc=95, action={drop})
+    if not mr.flag({mapped}):
+        discard
+
+# #GO_terms
+# igc_counts_GO = count(igc_mapped_post,
+#                     functional_map='IGC11M.map', # ruta al fichero map de referencia para 11M
+#                     features=['GO_terms'],
+#                     multiple={dist1},
+#                     normalization={scaled})
+# write(igc_counts_GO,
+#         ofile=outdir </> 'GO_terms.traditional.counts.tsv',
+#         auto_comments=[{hash}, {script}])
+
+#KEGG_ko profile
+igc_counts_KO = count(igc_mapped_post,
+                    functional_map='/mnt/lustre/scratch/CBRA/research/projects/metagenomic/IGC11M/IGC11M.emapper.annotations.map', 
+                    features=['KEGG_ko'],
+                    multiple={dist1},
+                    normalization={scaled})
+write(igc_counts_KO,
+        ofile=outdir </> 'KEGG_ko_dist_scaled_counts.tsv',
+        auto_comments=[{hash}, {script}])
+
+# #BiGG_reacctions
+# igc_counts_BiGG = count(igc_mapped_post,
+#                     features=['BiGG_reactions'],
+#                     multiple={dist1},
+#                     normalization={scaled})
+# write(igc_counts_BiGG,
+#         ofile=outdir </> 'BiGG_reactions.traditional.counts.tsv',
+#         auto_comments=[{hash}, {script}])
+
+# #OGs
+# igc_counts_OG = count(igc_mapped_post,
+#                     features=['OGs'],
+#                     multiple={dist1},
+#                     normalization={scaled})
+# write(igc_counts_OG,
+#         ofile=outdir </> 'OGs_traditional.counts.tsv',
+#         auto_comments=[{hash}, {script}])
+
