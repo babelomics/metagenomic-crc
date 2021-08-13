@@ -10,13 +10,13 @@ export $(egrep -v '^#' ${dotenv_path} | xargs)
 raw_data_folder="${file_folder}/../data/raw/"
 mkdir -p $raw_data_folder
 
-source="$user_id@$data_path/ngless_samples_profiles"
+source="$user_id@$ssh_data_path/ngless_samples_profiles"
 target=${raw_data_folder}
 
 #TODO use secretes from .env
 rsync -r -a -v -e ssh $source $target
 
-source="$user_id@$data_path/centrifuge_samples_profiles"
+source="$user_id@$ssh_data_path/centrifuge_samples_profiles"
 target=${raw_data_folder}
 
 #TODO use secretes from .env
