@@ -4,7 +4,7 @@ mode=$1
 is_hpc=$2
 
 condition="CRC"
-declare -a profiles=( "OGs" )
+declare -a profiles=( "OGs" "centrifuge" "KEGG_KOs" )
 declare -a MODELS=( "LOPO" "oLOPO_withCrossSupport" "oLOPO_withSignature" )
 
 
