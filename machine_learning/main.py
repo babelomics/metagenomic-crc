@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 from sklearn.exceptions import ConvergenceWarning
 
-from mlgut import analysis, datasets, models, train, utils
+from mlgut import analysis, datasets, models, train
 
 SEED = 42
 random.seed(SEED)
@@ -68,7 +68,6 @@ def train_interpreter(condition, profile_name, ext, save_path):
     profile_name : [type]
         [description]
     """
-    import pandas as pd
 
     print(f"Building datasets for {condition} condition and profile {profile_name}")
     features, metadata = datasets.build_condition_dataset(
