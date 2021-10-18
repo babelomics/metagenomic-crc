@@ -14,7 +14,7 @@ from scipy import stats
 from sklearn import metrics
 from sklearn.model_selection import LeaveOneGroupOut
 
-from mlgut.stability import nogueria_test
+from mlgut.pystab import nogueria_test
 from mlgut import utils
 from mlgut.datasets import get_path
 from mlgut.models import (

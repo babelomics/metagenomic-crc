@@ -75,8 +75,8 @@ def nogueria_test(pop_mat, alpha=0.05):
     phi_var = (4 / n_samples ** 2) * ((phi - phi_av) ** 2).sum()
 
     # CI of the estimate, Corollary 8 in [1]
-    lower = estimator - norm.ppf(1 - alpha / 2) * np.sqrt(phi)
-    upper = estimator + norm.ppf(1 - alpha / 2) * np.sqrt(phi)
+    lower = estimator - norm.ppf(1 - alpha / 2) * np.sqrt(phi_var)
+    upper = estimator + norm.ppf(1 - alpha / 2) * np.sqrt(phi_var)
     error = estimator - lower
 
     return NogueiraTest(estimator, upper, lower, phi_var, error, alpha)
