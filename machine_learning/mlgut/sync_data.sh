@@ -11,6 +11,8 @@ raw_data_folder="${file_folder}/../data/raw/"
 mkdir -p $raw_data_folder
 
 source="$user_id@$ssh_data_path/ngless_samples_profiles"
+echo $source
+
 target=${raw_data_folder}
 
 #TODO use secretes from .env

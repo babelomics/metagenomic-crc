@@ -19,12 +19,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 
 from mlgut import datasets
-from mlgut.models import (
-    compute_rbo_mat,
-    compute_support_ebm,
-    get_cp_support,
-    get_lopo_support,
-)
 
 MODELS = ["LOPO", "oLOPO_withCrossSupport", "oLOPO_withSignature"]
 DISEASE_COLUMN_NAME = "DISEASE"
@@ -178,16 +172,69 @@ def train_profile(condition, profile_name, model_name, path):
     results["condition"] = condition
     save_results(results, path)
 
+    return results
 
-def run_plot(condition, profiles, path):
-    pass
+
+def plot_significance(results, path, modus="signature", n_classes=2):
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import pandas as pd
+
+    sns.set(context="poster", style="white", font_scale=0.9)
+
+    colors = ["b", "C1", "g"]
+
+    fig, ax = plt.subplots(constrained_layout=True, figsize=(16, 9))
+
+    for i, results_i in enumerate(results):
+        color_i = colors[i]
+        profile_name = results_i["profile_name"]
+        if "centri" in profile_name.lower():
+            profile_name = "Taxo"
+        elif "ogs" in profile_name.lower():
+            profile_name = "eNog"
+        elif "kegg" in profile_name.lower():
+            profile_name = "Kegg"
+        pvalue = results_i["pvalue"]
+        permutation_scores = results_i["permutation_scores"]
+        score = results_i["score"]
+
+        # plt.hist(permutation_scores, 20, label='Permutation scores', edgecolor='black')
+        if i == 0:
+            sns.kdeplot(
+                pd.Series(permutation_scores, name="Permutation Scores"), color="k"
+            )
+        ylim = [0, 15]
+        plt.plot(
+            2 * [score],
+            ylim,
+            f"--{color_i}",
+            linewidth=3,
+            label=f"{profile_name} score {score:.3f} ({pvalue:.2e})",
+        )
+
+    plt.plot(2 * [1.0 / n_classes], ylim, "--k", linewidth=3, label="Luck")
+
+    plt.ylim(ylim)
+
+    plt.xlabel("AUROC score")
+    # plt.tight_layout()
+    plt.legend(loc="upper left", bbox_to_anchor=(0.27, 1))
+
+    sns.despine()
+
+    for ext in ["pdf", "svg", "png"]:
+        fname = f"{condition}_{modus}_permutation_analysis.{ext}"
+        fpath = path.joinpath(fname)
+        plt.savefig(fpath, dpi=300, bbox_inches="tight", pad_inches=0)
+    plt.show()
+    plt.close()
 
 
 def run(condition, profile, mode, model_name, path):
     if mode == "train":
-        train_profile(condition, profile, model_name, path)
-    elif mode == "plot":
-        run_plot(condition, profile, path)
+        results = train_profile(condition, profile, model_name, path)
+        plot_significance(results, path)
     else:
         raise NotImplementedError()
 

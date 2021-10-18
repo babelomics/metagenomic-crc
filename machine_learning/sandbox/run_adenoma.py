@@ -8,18 +8,15 @@ Adenoma analysis.
 
 import pathlib
 
+import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from scipy.stats import linregress
-from sklearn.model_selection import train_test_split
-from interpret.glassbox import ExplainableBoostingClassifier
-from scipy.stats import rankdata
-from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
 from interpret.glassbox import ExplainableBoostingClassifier
 from scipy import stats
-import joblib
+from scipy.stats import linregress, rankdata
+from sklearn.model_selection import train_test_split
 
 from mlgut import datasets, models
 
@@ -219,7 +216,7 @@ def main(condition, profile_name, results_path):
     disease_train = metadata.DISEASE[query_]
     y_ = metadata.DISEASE[query_] == condition
     X_ = features.loc[query_, :]
-    g = metadata.loc[query_, PROJECT_COLUMN_NAME]
+    metadata.loc[query_, PROJECT_COLUMN_NAME]
     metadata_adenoma = metadata.loc[~query_, :].copy()
 
     X_ = features.loc[query_, columns]
