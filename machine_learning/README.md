@@ -43,3 +43,9 @@ The summary graphics and tables can be produced with the `mlgut/analysis.py` fil
 ![Rank stability analysis](figures/crc_rank_analysis.svg?raw=true "Rank stability analysis")
 
 ![Adenoma analysis](figures/crc_adenoma_radar.svg?raw=true "Adenoma analysis")
+
+![Kegg cross-project analysis](figures/crc_kegg_kos_score_matrix.svg?raw=true "Kegg cross-project analysis")
+
+![Taxonomic cross-project analysis](figures/crc_centrifuge_score_matrix.svg?raw=true "Taxonomic cross-project analysis")
+
+![eggNog cross-project analysis](figures/crc_ogs_score_matrix.svg?raw=true "eggNog cross-project analysis")
