@@ -13,10 +13,10 @@ import numpy as np
 import pandas as pd
 from interpret.glassbox import ExplainableBoostingClassifier
 from scipy import stats
-from scipy.stats import linregress, rankdata
+from scipy.stats import linregress
 from sklearn.model_selection import train_test_split
 
-from mlgut import datasets, models
+from mlgut import datasets, models, pystab
 
 PROJECT_NAMES_DICT = {
     "PRJNA389927": "Hannigan",
@@ -33,27 +33,6 @@ DISEASE_COLUMN_NAME = "DISEASE"
 PROJECT_COLUMN_NAME = "SECONDARY_STUDY_ID"
 
 EXTENSIONS = ["pdf", "png", "svg"]
-
-
-def fdr(p_vals):
-    """False Discovery Rate p values adjustment.
-
-    Parameters
-    ----------
-    p_vals : array like (n_runs, )
-        The list of p values.
-
-    Returns
-    -------
-    array (n_runs, )
-        FDR-adjusted p values.
-    """
-
-    ranked_p_values = rankdata(p_vals)
-    p_vals_new = p_vals * len(p_vals) / ranked_p_values
-    p_vals_new[p_vals_new > 1] = 1
-
-    return p_vals_new
 
 
 def main(condition, profile_name, results_path):
@@ -163,7 +142,7 @@ def main(condition, profile_name, results_path):
         [reg[3] for reg in adenoma_reg], index=X_adenoma.columns, name="r_pvalue"
     )
     adenoma_pval_fdr = pd.Series(
-        fdr(adenoma_pval), index=X_adenoma.columns, name="r_pvalue_fdr"
+        pystab.fdr(adenoma_pval), index=X_adenoma.columns, name="r_pvalue_fdr"
     )
 
     adenoma_rank = explanation_df.abs().sum().sort_values(ascending=False)
