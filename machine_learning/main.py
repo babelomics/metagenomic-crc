@@ -95,7 +95,7 @@ def train_interpreter(condition, profile_name, ext, save_path):
         features, metadata, model_with_sel, profile_name, condition, save=save_path
     )
 
-    print("\t LOPO analysis, ask the Oracle.")
+    print("\t oLOPO analysis, ask the Oracle.")
     model_wo_sel = models.get_model(profile_name, selector=False)
     train.perform_lopo(
         features, metadata, model_wo_sel, profile_name, condition, which_oracle=oracle, save=save_path

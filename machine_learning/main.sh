@@ -19,7 +19,7 @@ for profile in "${profiles[@]}"; do
         if [[ "$is_hpc" == 1 ]]; then
             sbatch -J ${job_name} -N 1 -c 24 -e $err -o $out --wrap="ml anaconda2; conda activate ./.venv; python main.py ${condition} ${profile} ${path}"
         else
-            conda activate ./.venv; python main.py ${condition} ${profile} ${path}
+            conda activate ./.venv; python main.py ${condition} ${profile} ${path} >> ${out} 2>> ${err}
         fi
     fi
     
@@ -34,7 +34,7 @@ for profile in "${profiles[@]}"; do
             if [[ "$is_hpc" == 1 ]]; then
                 sbatch -J ${job_name} -N 1 -c 24 -e $err -o $out --wrap="ml anaconda2; conda activate ./.venv; python significance.py ${condition} ${profile} train $model ${path}"
             else
-                conda activate ./.venv; python significance.py ${condition} ${profile} train $model ${path}
+                conda activate ./.venv; python significance.py ${condition} ${profile} train $model ${path} >> ${out} 2>> ${err}
             fi
         done
     fi
@@ -48,7 +48,7 @@ for profile in "${profiles[@]}"; do
         if [[ "$is_hpc" == 1 ]]; then
             sbatch -J ${job_name} -N 1 -c 24 -e $err -o $out --wrap="ml anaconda2; conda activate ./.venv; python run_adenoma.py ${condition} ${profile} ${path}"
         else
-            conda activate ./.venv; python run_adenoma.py ${condition} ${profile} ${path}
+            conda activate ./.venv; python run_adenoma.py ${condition} ${profile} ${path} >> ${out} 2>> ${err}
         fi
     fi
     
