@@ -15,7 +15,7 @@ random.seed(SEED)
 np.random.seed(SEED)
 
 
-def build_data_sources(profiles=["KEGG_KOs", "centrifuge", "OGs"], ext="jbl"):
+def build_data_sources(profiles=("KEGG_KOs", "centrifuge", "OGs"), ext="jbl"):
     """[summary]
     """
     metadata = datasets.build_metadata()
@@ -24,7 +24,15 @@ def build_data_sources(profiles=["KEGG_KOs", "centrifuge", "OGs"], ext="jbl"):
     datasets.write_features(features_dict, ext=ext)
 
 
-def main(condition, profile_name, build_data=True, sync=True, debug=True, ext="jbl", path=None):
+def main(
+    condition,
+    profile_name,
+    build_data=True,
+    sync=True,
+    debug=True,
+    ext="jbl",
+    path=None,
+):
     """[summary]
 
     Parameters
@@ -98,11 +106,19 @@ def train_interpreter(condition, profile_name, ext, save_path):
     print("\t oLOPO analysis, ask the Oracle.")
     model_wo_sel = models.get_model(profile_name, selector=False)
     train.perform_lopo(
-        features, metadata, model_wo_sel, profile_name, condition, which_oracle=oracle, save=save_path
+        features,
+        metadata,
+        model_wo_sel,
+        profile_name,
+        condition,
+        which_oracle=oracle,
+        save=save_path,
     )
 
     print("\t Stability analysis.")
-    train.perform_stability_analysis(features, metadata, model, profile_name, condition, save=save_path)
+    train.perform_stability_analysis(
+        features, metadata, model, profile_name, condition, save=save_path
+    )
 
     print("Analysis")
     analysis.build_analysis(
@@ -123,5 +139,5 @@ if __name__ == "__main__":
         sync=False,
         debug=False,
         ext="jbl",
-        path=path
+        path=path,
     )
