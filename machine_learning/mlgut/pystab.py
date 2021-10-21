@@ -6,11 +6,11 @@ Implementation of Nogueira's stability measure. See:
 """
 
 
-from scipy.stats import norm
 from collections import namedtuple
-from sklearn.utils import check_array
-import numpy as np
 
+import numpy as np
+from scipy.stats import norm
+from sklearn.utils import check_array
 
 NogueiraTest = namedtuple(
     "NogueiraTest", ("estimator", "upper", "lower", "var", "error", "alpha")
@@ -80,3 +80,25 @@ def nogueria_test(pop_mat, alpha=0.05):
     error = estimator - lower
 
     return NogueiraTest(estimator, upper, lower, phi_var, error, alpha)
+
+
+
+def fdr(p_vals):
+    """False Discovery Rate p values adjustment.
+
+    Parameters
+    ----------
+    p_vals : array like (n_runs, )
+        The list of p values.
+
+    Returns
+    -------
+    array (n_runs, )
+        FDR-adjusted p values.
+    """
+
+    ranked_p_values = rankdata(p_vals)
+    p_vals_new = p_vals * len(p_vals) / ranked_p_values
+    p_vals_new[p_vals_new > 1] = 1
+
+    return p_vals_new
