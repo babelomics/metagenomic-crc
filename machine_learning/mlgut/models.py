@@ -16,24 +16,24 @@ N_ESTIMATORS = 24
 
 
 def get_model(profile: str, selector=True, lopo=False) -> Pipeline:
-    """[summary]
+    """Get an unfitted estimator as a sklearn pipeline for each metagenomic profile.
 
     Parameters
     ----------
     profile : str
-        [description]
+        Metagenomics profile name (one of OGs: eggNog, KEGG_KOs: kegg, centrifuge: taxo)
     selector : bool, optional
-        [description], by default True
+        Use FS as a layer, by default True
 
     Returns
     -------
     Pipeline
-        [description]
+        Estimator as a reproduble pipeline
 
     Raises
     ------
     NotImplementedError
-        [description]
+        Profile not included yet
     """
     if profile.lower() in ["taxo", "taxonomic", "centrifuge"]:
         model = get_taxonomic_model(selector, lopo)
@@ -48,17 +48,17 @@ def get_model(profile: str, selector=True, lopo=False) -> Pipeline:
 
 
 def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
-    """[summary]
+    """Get an unfitted estimator as a sklearn pipeline for taxonomic profile.
 
     Parameters
     ----------
     selector : bool, optional
-        [description], by default True
+        Use FS as a layer, by default True
 
     Returns
     -------
     Pipeline
-        [description]
+        Estimator as a reproduble pipeline
     """
     if selector:
         model = Pipeline(
@@ -108,17 +108,17 @@ def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
 
 
 def get_kegg_model(selector=True, lopo=False) -> Pipeline:
-    """[summary]
+    """Get an unfitted estimator as a sklearn pipeline for KEGG KO profile.
 
     Parameters
     ----------
     selector : bool, optional
-        [description], by default True
+        Use FS as a layer, by default True
 
     Returns
     -------
     Pipeline
-        [description]
+        Estimator as a reproduble pipeline
     """
     if selector:
         model = Pipeline(
@@ -168,17 +168,17 @@ def get_kegg_model(selector=True, lopo=False) -> Pipeline:
 
 
 def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
-    """[summary]
+    """Get an unfitted estimator as a sklearn pipeline for eggNog profile.
 
     Parameters
     ----------
     selector : bool, optional
-        [description], by default True
+        Use FS as a layer, by default True
 
     Returns
     -------
     Pipeline
-        [description]
+        Estimator as a reproduble pipeline
     """
     if selector:
         model = Pipeline(
@@ -227,7 +227,19 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
     return model
 
 
-def compute_support_ebm(model: Pipeline, quantile=None):
+def compute_support_ebm(model: Pipeline) -> (np.ndarray, np.ndarray):
+    """Get the learned relevances.
+
+    Parameters
+    ----------
+    model : Pipeline
+        Fitted estimator.
+
+    Returns
+    -------
+    ndarray (n_features, ), ndarray (n_features, )
+        Support and relevances learned.
+    """
     # TODO: check if trained
     ebm = model["estimator"]
     ebm_global = ebm.explain_global()
@@ -284,18 +296,18 @@ def get_cp_support(results, columns):
     return combine_support(support)
 
 
-def combine_support(support):
-    """[summary]
+def combine_support(support: list):
+    """Build the final signature from the learned relevances across the projects.
 
     Parameters
     ----------
-    support : [type]
-        [description]
+    support : list like
+        Alist ocntaining the different supports learned.
 
     Returns
     -------
-    [type]
-        [description]
+    DataFrame (n_features, n_projects), DataFrame (n_features, )
+        The learned support (raw) and the combined signature.
     """
     support = pd.concat(support, axis=1)
     n_projects = support.shape[1]
