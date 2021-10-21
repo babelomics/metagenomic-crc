@@ -1,3 +1,3 @@
 # metagenomic-crc
 
-![img/pipeline.svg](:pipeline)
+![pipeline](:img/pipeline.svg)
