@@ -9,10 +9,8 @@ Adenoma analysis.
 import pathlib
 
 import joblib
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 from interpret.glassbox import ExplainableBoostingClassifier
 from scipy import stats
 from scipy.stats import linregress, rankdata
@@ -38,6 +36,18 @@ EXTENSIONS = ["pdf", "png", "svg"]
 
 
 def fdr(p_vals):
+    """False Discovery Rate p values adjustment.
+
+    Parameters
+    ----------
+    p_vals : array like (n_runs, )
+        The list of p values.
+
+    Returns
+    -------
+    array (n_runs, )
+        FDR-adjusted p values.
+    """
 
     ranked_p_values = rankdata(p_vals)
     p_vals_new = p_vals * len(p_vals) / ranked_p_values
@@ -174,7 +184,6 @@ def main(condition, profile_name, results_path):
     disease_train = metadata.DISEASE[query_]
     y_ = metadata.DISEASE[query_] == condition
     X_ = features.loc[query_, :]
-    metadata.loc[query_, PROJECT_COLUMN_NAME]
     metadata_adenoma = metadata.loc[~query_, :].copy()
 
     X_ = features.loc[query_, columns]
@@ -272,6 +281,6 @@ def main(condition, profile_name, results_path):
 if __name__ == "__main__":
     import sys
 
-    _, condition, profile, path = sys.argv
+    _, this_condition, this_profile, this_path = sys.argv
 
-    main(condition, profile, path)
+    main(this_condition, this_profile, this_path)
