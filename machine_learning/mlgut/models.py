@@ -259,6 +259,21 @@ def compute_support_ebm(model: Pipeline) -> (np.ndarray, np.ndarray):
 
 
 def get_lopo_support(cv_results, columns):
+    """Extract the support learned across the LOPO analysis for a given profile.
+
+    Parameters
+    ----------
+    cv_results : sklearn CV object
+        The model evaluated across the LOPO
+    columns : list like (n_features, )
+        Feature names.
+    
+    Returns
+    -------
+    DataFrame (n_features, n_projects)
+        Support for the combined projects. So project_i means features learned using all
+        projects except i.
+    """
 
     support = [
         pd.Series(compute_support_ebm(est)[1], index=columns)
@@ -269,19 +284,19 @@ def get_lopo_support(cv_results, columns):
 
 
 def get_cp_support(results, columns):
-    """[summary]
+    """Combine the learned support for the cross project analysis (for a given profile).
 
     Parameters
     ----------
-    results : [type]
-        [description]
-    columns : [type]
-        [description]
+    results : ndarray (n_features, )
+        Support learned for one project.
+    columns : list like[str] (n_features, )
+        Feature names.
 
     Returns
     -------
-    [type]
-        [description]
+    DataFrame (n_features, n_projects)
+        Frame with the support learned for each project
     """
 
     support = [
