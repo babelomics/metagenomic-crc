@@ -8,15 +8,11 @@ ML models module.
 import numpy as np
 import pandas as pd
 from interpret.glassbox import ExplainableBoostingClassifier
-from scipy.spatial.distance import pdist
-from sklearn import metrics
 from sklearn.feature_selection import SelectFdr, SelectFpr
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, KBinsDiscretizer
 
-from mlgut.rbo import rbo_dict
-
-N_CPU = 24
+N_ESTIMATORS = 24
 
 
 def get_model(profile: str, selector=True, lopo=False) -> Pipeline:
@@ -73,7 +69,7 @@ def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=N_CPU, n_jobs=-1, random_state=42
+                        n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -88,7 +84,7 @@ def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
                     (
                         "estimator",
                         ExplainableBoostingClassifier(
-                            n_estimators=N_CPU, n_jobs=-1, random_state=42
+                            n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                         ),
                     ),
                 ]
@@ -102,7 +98,7 @@ def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=N_CPU, n_jobs=-1, random_state=42
+                        n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -133,7 +129,7 @@ def get_kegg_model(selector=True, lopo=False) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=N_CPU, n_jobs=-1, random_state=42
+                        n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -148,7 +144,7 @@ def get_kegg_model(selector=True, lopo=False) -> Pipeline:
                     (
                         "estimator",
                         ExplainableBoostingClassifier(
-                            n_estimators=N_CPU, n_jobs=-1, random_state=42
+                            n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                         ),
                     ),
                 ]
@@ -162,7 +158,7 @@ def get_kegg_model(selector=True, lopo=False) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=N_CPU, n_jobs=-1, random_state=42
+                        n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -193,7 +189,7 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=N_CPU, n_jobs=-1, random_state=42
+                        n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -208,7 +204,7 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
                     (
                         "estimator",
                         ExplainableBoostingClassifier(
-                            n_estimators=N_CPU, n_jobs=-1, random_state=42
+                            n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                         ),
                     ),
                 ]
@@ -222,45 +218,13 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=N_CPU, n_jobs=-1, random_state=42
+                        n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
         )
 
     return model
-
-
-# def compute_rbo_mat(rank_mat_filt, p=0.999, filt=True):
-#     if filt:
-#         # safe filter to speed up the computation
-#         rank_mat_filt = rank_mat_filt.loc[rank_mat_filt.any(axis=1), :]
-
-#     col_dict_list = np.array(
-#         [rank_mat_filt[col].to_dict() for col in rank_mat_filt.columns]
-#     ).reshape(-1, 1)
-#     distmat = pdist(col_dict_list, lambda x, y: 1 - rbo_dict(x[0], y[0], p=p)[-1])
-
-#     return distmat
-
-
-def rbo_dist(x, y, p=0.999):
-    x_dict = pd.Series(x).to_dict()
-    y_dict = pd.Series(y).to_dict()
-
-    return 1 - rbo_dict(x_dict, y_dict, p=p)[-1]
-
-
-def compute_rbo_mat(rank_mat, p=0.999, filt=True):
-    if filt:
-        # safe filter to speed up the computation
-        rank_mat_filt = rank_mat.loc[rank_mat.any(axis=1), :]
-    else:
-        rank_mat_filt = rank_mat
-
-    dmat = metrics.pairwise_distances(X=rank_mat_filt, n_jobs=-1, metric=rbo_dist, p=p)
-
-    return dmat
 
 
 def compute_support_ebm(model: Pipeline, quantile=None):
@@ -293,6 +257,20 @@ def get_lopo_support(cv_results, columns):
 
 
 def get_cp_support(results, columns):
+    """[summary]
+
+    Parameters
+    ----------
+    results : [type]
+        [description]
+    columns : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
 
     support = [
         pd.Series(
@@ -307,6 +285,18 @@ def get_cp_support(results, columns):
 
 
 def combine_support(support):
+    """[summary]
+
+    Parameters
+    ----------
+    support : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     support = pd.concat(support, axis=1)
     n_projects = support.shape[1]
     cross_dataset_support = n_projects - (support != 0.0).sum(axis=1) + 1
@@ -316,88 +306,3 @@ def combine_support(support):
     support_merged = support_merged.sort_values(ascending=False)
 
     return support, support_merged
-
-
-# class ItemSelector(BaseEstimator, TransformerMixin):
-#     """For data grouped by feature, select subset of data at a provided key.
-
-#     The data is expected to be stored in a 2D data structure, where the first
-#     index is over features and the second is over samples.  i.e.
-
-#     >> len(data[key]) == n_samples
-
-#     Please note that this is the opposite convention to scikit-learn feature
-#     matrixes (where the first index corresponds to sample).
-
-#     ItemSelector only requires that the collection implement getitem
-#     (data[key]).  Examples include: a dict of lists, 2D numpy array, Pandas
-#     DataFrame, numpy record array, etc.
-
-#     >> data = {'a': [1, 5, 2, 5, 2, 8],
-#                'b': [9, 4, 1, 4, 1, 3]}
-#     >> ds = ItemSelector(key='a')
-#     >> data['a'] == ds.transform(data)
-
-#     ItemSelector is not designed to handle data grouped by sample.  (e.g. a
-#     list of dicts).  If your data is structured this way, consider a
-#     transformer along the lines of `sklearn.feature_extraction.DictVectorizer`.
-
-#     Parameters
-#     ----------
-#     key : hashable, required
-#         The key corresponding to the desired value in a mappable.
-#     """
-
-#     def __init__(self, key):
-#         self.key = key
-
-#     def fit(self, x, y=None):
-#         return self
-
-#     def transform(self, data_dict):
-#         return data_dict[self.key]
-
-
-# def get_combined_model(profile_list):
-
-#     transformer_list = [
-#         ("name", Pipeline([("selector", ItemSelector(key=name))]))
-#         for name in profile_list
-#     ]
-
-#     transformer_list = []
-
-#     for name in profile_list:
-#         if name.lower() == "centrifuge":
-#             pipe = (
-#                 "name",
-#                 Pipeline(
-#                     [
-#                         ("item", ItemSelector(key=name)),
-#                         ("disretizer", KBinsDiscretizer(n_bins=4, encode="ordinal")),
-#                         ("selector", SelectFpr()),
-#                     ]
-#                 ),
-#             )
-
-#             transformer_list.append(pipe)
-
-#     model = Pipeline(
-#         [
-#             # Use FeatureUnion to combine the features from kegg and aro
-#             ("union", FeatureUnion(transformer_list)),
-#             # component-wise transformation
-#             ("transformer", QuantileTransformer(random_state=42)),
-#             (
-#                 "pca",
-#                 decomposition.KernelPCA(
-#                     kernel="linear", n_components=100, random_state=42
-#                 ),
-#             ),
-#             #     ('gp', gpf)
-#             #     # Use a Linear SVM classifier on the combined features
-#             ("svm", SVC(kernel="linear", probability=True, random_state=42)),
-#         ]
-#     )
-
-#     return model
