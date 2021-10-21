@@ -11,6 +11,7 @@ from interpret.glassbox import ExplainableBoostingClassifier
 from sklearn.feature_selection import SelectFdr, SelectFpr
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, KBinsDiscretizer
+import pathlib
 
 N_ESTIMATORS = 24
 
@@ -333,3 +334,30 @@ def combine_support(support: list):
     support_merged = support_merged.sort_values(ascending=False)
 
     return support, support_merged
+
+
+def extract_support_from_siganture(support_frame: pd.DataFrame) -> np.ndarray:
+    """[summary]
+
+    Parameters
+    ----------
+    support_frame : pd.DataFrame
+        [description]
+
+    Returns
+    -------
+    np.ndarray
+        Support as feature names
+    """
+    return support_frame[support_frame > 0.0].index.astype(str)
+
+
+def extract_support_from_signature_path(condition, profile_name, folder_path):
+    folder_path = pathlib.Path(folder_path)
+    best_path = folder_path.joinpath(f"{condition}_{profile_name}_cp_support_merge.tsv")
+
+    support_frame = pd.read_csv(best_path, sep="\t", index_col=0).iloc[:, 0]
+    columns = extract_support_from_siganture(support_frame)
+
+    return columns
+
