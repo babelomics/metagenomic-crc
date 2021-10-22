@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
+"""
+author: Carlos Loucera
+email: carlos.loucera@juntadeandalucia.es
+
+Main processing and training module.
+"""
 import pathlib
 import random
 import subprocess
@@ -33,22 +39,22 @@ def main(
     ext="jbl",
     path=None,
 ):
-    """[summary]
+    """Main routine to perform the training.
 
     Parameters
     ----------
-    condition : [type]
-        [description]
-    profile_name : [type]
-        [description]
+    condition : str like
+        Disease code.
+    profile_name : str like
+        Metagenomic profile name.
     build_data : bool, optional
-        [description], by default True
+        If True build and dump the processed files, by default True
     sync : bool, optional
-        [description], by default True
+        Synchronize data processed with the bioinformatics pipeline, by default True
     """
     if sync:
         print("Sync data.")
-        subprocess.run(["sh", "mlgut/sync_data.sh"])
+        subprocess.run(["sh", "mlgut/sync_data.sh"], check=True)
     if build_data:
         print("Build Data sources.")
         build_data_sources(ext=ext)
@@ -59,6 +65,8 @@ def main(
 
 
 def filter_warnings():
+    """Filter warnings when not debugging.
+    """
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     warnings.filterwarnings("ignore", category=UserWarning)
     warnings.filterwarnings("ignore", category=ConvergenceWarning)
@@ -67,14 +75,14 @@ def filter_warnings():
 
 
 def train_interpreter(condition, profile_name, ext, save_path):
-    """[summary]
+    """Training helper function.
 
     Parameters
     ----------
-    condition : [type]
-        [description]
-    profile_name : [type]
-        [description]
+    condition : str like
+        Disease code.
+    profile_name : str like
+        Metagenomics profile name.
     """
 
     print(f"Building datasets for {condition} condition and profile {profile_name}")
@@ -129,15 +137,15 @@ def train_interpreter(condition, profile_name, ext, save_path):
 if __name__ == "__main__":
     import sys
 
-    _, condition, profile_name, path = sys.argv
-    path = pathlib.Path(path)
+    _, this_condition, this_profile_name, this_path = sys.argv
+    this_path = pathlib.Path(this_path)
 
     main(
-        condition,
-        profile_name=profile_name,
+        this_condition,
+        profile_name=this_profile_name,
         build_data=False,
         sync=False,
         debug=False,
         ext="jbl",
-        path=path,
+        path=this_path,
     )
