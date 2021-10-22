@@ -5,13 +5,14 @@ email: carlos.loucera@juntadeandalucia.es
 
 ML models module.
 """
+import pathlib
+
 import numpy as np
 import pandas as pd
 from interpret.glassbox import ExplainableBoostingClassifier
 from sklearn.feature_selection import SelectFdr, SelectFpr
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, KBinsDiscretizer
-import pathlib
 
 N_ESTIMATORS = 24
 
@@ -336,28 +337,43 @@ def combine_support(support: list):
     return support, support_merged
 
 
-def extract_support_from_siganture(support_frame: pd.DataFrame) -> np.ndarray:
-    """[summary]
+def extract_support_from_signature(support_frame: pd.DataFrame) -> np.ndarray:
+    """Given a profile siganture, extract the support.
 
     Parameters
     ----------
-    support_frame : pd.DataFrame
-        [description]
+    support_frame : pd.DataFrame (n_features, )
+        The model relevances.
 
     Returns
     -------
-    np.ndarray
-        Support as feature names
+    np.ndarray (n_features_used, )
+        Support as feature names.
     """
     return support_frame[support_frame > 0.0].index.astype(str)
 
 
 def extract_support_from_signature_path(condition, profile_name, folder_path):
+    """Load a signature stored with a support-based function and extract the support.
+
+    Parameters
+    ----------
+    condition : str like
+        Disease code name.
+    profile_name : str like
+        Metagenomics profile name.
+    folder_path : str like
+        Folder where the signature was dumped.
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     folder_path = pathlib.Path(folder_path)
     best_path = folder_path.joinpath(f"{condition}_{profile_name}_cp_support_merge.tsv")
 
     support_frame = pd.read_csv(best_path, sep="\t", index_col=0).iloc[:, 0]
-    columns = extract_support_from_siganture(support_frame)
+    columns = extract_support_from_signature(support_frame)
 
     return columns
-
