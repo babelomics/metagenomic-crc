@@ -319,7 +319,7 @@ def combine_support(support: list):
     Parameters
     ----------
     support : list like
-        Alist ocntaining the different supports learned.
+        A list containing the different supports learned.
 
     Returns
     -------
