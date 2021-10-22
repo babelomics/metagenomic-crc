@@ -9,7 +9,7 @@ Implementation of Nogueira's stability measure. See:
 from collections import namedtuple
 
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import norm, rankdata
 from sklearn.utils import check_array
 
 NogueiraTest = namedtuple(
