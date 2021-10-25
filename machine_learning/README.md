@@ -29,8 +29,7 @@ All the CV splits, training and evaluation can be performed with the `train_inte
 
 The `main.sh` BASH file could be used as an example of how to run the experiments (this is how the paper experiments were done).
 
-The summary graphics and tables can be produced with the `mlgut/analysis.py` file. Note that the analysis is automatically performed as part of the main pipeline.
-
+The summary graphics and tables can be produced with the `plot_results.ipynb` file.
 
 ## Results summary
 
