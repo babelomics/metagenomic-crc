@@ -319,7 +319,7 @@ def train_profile(condition, profile_name, model_name, path):
     return results
 
 
-def run(condition, profile, mode, model_name, path):
+def run_(condition, profile, model_name, path):
     """Launch validation procedure for a given profile.
 
     Parameters
@@ -338,15 +338,12 @@ def run(condition, profile, mode, model_name, path):
     NotImplementedError
         [description]
     """
-    if mode == "train":
-        results = train_profile(condition, profile, model_name, path)
-        save_results(results, path)
-    else:
-        raise NotImplementedError()
+    results = train_profile(condition, profile, model_name, path)
+    save_results(results, path)
 
 
 if __name__ == "__main__":
-    _, this_condition, this_profile, this_mode, this_model_name, this_path = sys.argv
+    _, this_condition, this_profile, this_model_name, this_path = sys.argv
     this_path = pathlib.Path(this_path)
 
-    run(this_condition, this_profile, this_mode, this_model_name, this_path)
+    run_(this_condition, this_profile, this_model_name, this_path)

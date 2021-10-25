@@ -14,7 +14,7 @@ import warnings
 import numpy as np
 from sklearn.exceptions import ConvergenceWarning
 
-from mlgut import datasets, models, train
+from mlgut import datasets, models, train, adenoma, signature
 
 SEED = 42
 random.seed(SEED)
@@ -126,6 +126,15 @@ def train_interpreter(condition, profile_name, ext, save_path):
     print("\t Stability analysis.")
     train.perform_stability_analysis(
         features, metadata, model, profile_name, condition, save=save_path
+    )
+
+    print("\t Adenoma analysis.")
+    adenoma.run_(condition, profile_name, save_path)
+
+    print("\t Signature analysis.")
+    # TODO add more siganture modes based on iqr and healthy batch filters.
+    signature.run_(
+        condition, profile_name, this_model_name="oLOPO_withSignature", path=save_path,
     )
 
 
