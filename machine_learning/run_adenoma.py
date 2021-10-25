@@ -34,7 +34,7 @@ PROJECT_COLUMN_NAME = "SECONDARY_STUDY_ID"
 EXTENSIONS = ["pdf", "png", "svg"]
 
 
-def main(condition, profile_name, results_path):
+def run_adenoma(condition, profile_name, results_path):
     """Main rotuine to compute the adenoma explanations and build the adenoma
     validation analysis.
 
@@ -272,4 +272,4 @@ if __name__ == "__main__":
 
     _, this_condition, this_profile, this_path = sys.argv
 
-    main(this_condition, this_profile, this_path)
+    run_adenoma(this_condition, this_profile, this_path)
