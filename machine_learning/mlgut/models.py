@@ -6,6 +6,7 @@ email: carlos.loucera@juntadeandalucia.es
 ML models module.
 """
 import pathlib
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
@@ -229,7 +230,7 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
     return model
 
 
-def compute_support_ebm(model: Pipeline) -> (np.ndarray, np.ndarray):
+def compute_support_ebm(model: Pipeline) -> Tuple[np.ndarray, np.ndarray]:
     """Get the learned relevances.
 
     Parameters
@@ -367,8 +368,8 @@ def extract_support_from_signature_path(condition, profile_name, folder_path):
 
     Returns
     -------
-    [type]
-        [description]
+    array like, (n_features_used, )
+        Feature names used.
     """
     folder_path = pathlib.Path(folder_path)
     best_path = folder_path.joinpath(f"{condition}_{profile_name}_cp_support_merge.tsv")

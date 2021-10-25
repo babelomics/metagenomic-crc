@@ -14,7 +14,7 @@ import warnings
 import numpy as np
 from sklearn.exceptions import ConvergenceWarning
 
-from mlgut import analysis, datasets, models, train
+from mlgut import datasets, models, train
 
 SEED = 42
 random.seed(SEED)
@@ -126,11 +126,6 @@ def train_interpreter(condition, profile_name, ext, save_path):
     print("\t Stability analysis.")
     train.perform_stability_analysis(
         features, metadata, model, profile_name, condition, save=save_path
-    )
-
-    print("Analysis")
-    analysis.build_analysis(
-        features, metadata, profile_name, condition, "healthy", save_path
     )
 
 

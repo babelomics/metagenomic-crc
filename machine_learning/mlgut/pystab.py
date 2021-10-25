@@ -82,7 +82,6 @@ def nogueria_test(pop_mat, alpha=0.05):
     return NogueiraTest(estimator, upper, lower, phi_var, error, alpha)
 
 
-
 def fdr(p_vals):
     """False Discovery Rate p values adjustment.
 
