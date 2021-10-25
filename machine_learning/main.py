@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
+"""
+author: Carlos Loucera
+email: carlos.loucera@juntadeandalucia.es
+
+Main processing and training module.
+"""
 import pathlib
 import random
 import subprocess
@@ -8,14 +14,14 @@ import warnings
 import numpy as np
 from sklearn.exceptions import ConvergenceWarning
 
-from mlgut import analysis, datasets, models, train, utils
+from mlgut import datasets, models, train, adenoma, signature
 
 SEED = 42
 random.seed(SEED)
 np.random.seed(SEED)
 
 
-def build_data_sources(profiles=["KEGG_KOs", "centrifuge", "OGs"], ext="jbl"):
+def build_data_sources(profiles=("KEGG_KOs", "centrifuge", "OGs"), ext="jbl"):
     """[summary]
     """
     metadata = datasets.build_metadata()
@@ -24,23 +30,31 @@ def build_data_sources(profiles=["KEGG_KOs", "centrifuge", "OGs"], ext="jbl"):
     datasets.write_features(features_dict, ext=ext)
 
 
-def main(condition, profile_name, build_data=True, sync=True, debug=True, ext="jbl", path=None):
-    """[summary]
+def main(
+    condition,
+    profile_name,
+    build_data=True,
+    sync=True,
+    debug=True,
+    ext="jbl",
+    path=None,
+):
+    """Main routine to perform the training.
 
     Parameters
     ----------
-    condition : [type]
-        [description]
-    profile_name : [type]
-        [description]
+    condition : str like
+        Disease code.
+    profile_name : str like
+        Metagenomic profile name.
     build_data : bool, optional
-        [description], by default True
+        If True build and dump the processed files, by default True
     sync : bool, optional
-        [description], by default True
+        Synchronize data processed with the bioinformatics pipeline, by default True
     """
     if sync:
         print("Sync data.")
-        subprocess.run(["sh", "mlgut/sync_data.sh"])
+        subprocess.run(["sh", "mlgut/sync_data.sh"], check=True)
     if build_data:
         print("Build Data sources.")
         build_data_sources(ext=ext)
@@ -51,6 +65,8 @@ def main(condition, profile_name, build_data=True, sync=True, debug=True, ext="j
 
 
 def filter_warnings():
+    """Filter warnings when not debugging.
+    """
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     warnings.filterwarnings("ignore", category=UserWarning)
     warnings.filterwarnings("ignore", category=ConvergenceWarning)
@@ -59,16 +75,15 @@ def filter_warnings():
 
 
 def train_interpreter(condition, profile_name, ext, save_path):
-    """[summary]
+    """Training helper function.
 
     Parameters
     ----------
-    condition : [type]
-        [description]
-    profile_name : [type]
-        [description]
+    condition : str like
+        Disease code.
+    profile_name : str like
+        Metagenomics profile name.
     """
-    import pandas as pd
 
     print(f"Building datasets for {condition} condition and profile {profile_name}")
     features, metadata = datasets.build_condition_dataset(
@@ -96,33 +111,45 @@ def train_interpreter(condition, profile_name, ext, save_path):
         features, metadata, model_with_sel, profile_name, condition, save=save_path
     )
 
-    print("\t LOPO analysis, ask the Oracle.")
+    print("\t oLOPO analysis, ask the Oracle.")
     model_wo_sel = models.get_model(profile_name, selector=False)
     train.perform_lopo(
-        features, metadata, model_wo_sel, profile_name, condition, which_oracle=oracle, save=save_path
+        features,
+        metadata,
+        model_wo_sel,
+        profile_name,
+        condition,
+        which_oracle=oracle,
+        save=save_path,
     )
 
     print("\t Stability analysis.")
-    train.perform_stability_analysis(features, metadata, model, profile_name, condition, save=save_path)
+    train.perform_stability_analysis(
+        features, metadata, model, profile_name, condition, save=save_path
+    )
 
-    print("Analysis")
-    analysis.build_analysis(
-        features, metadata, profile_name, condition, "healthy", save_path
+    print("\t Adenoma analysis.")
+    adenoma.run_(condition, profile_name, save_path)
+
+    print("\t Signature analysis.")
+    # TODO add more siganture modes based on iqr and healthy batch filters.
+    signature.run_(
+        condition, profile_name, this_model_name="oLOPO_withSignature", path=save_path,
     )
 
 
 if __name__ == "__main__":
     import sys
 
-    _, condition, profile_name, path = sys.argv
-    path = pathlib.Path(path)
+    _, this_condition, this_profile_name, this_path = sys.argv
+    this_path = pathlib.Path(this_path)
 
     main(
-        condition,
-        profile_name=profile_name,
+        this_condition,
+        profile_name=this_profile_name,
         build_data=False,
         sync=False,
         debug=False,
         ext="jbl",
-        path=path
+        path=this_path,
     )

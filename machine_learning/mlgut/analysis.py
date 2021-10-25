@@ -12,17 +12,15 @@ import pandas as pd
 import seaborn as sns
 from scipy import stats
 from sklearn import metrics
-from sklearn.model_selection import LeaveOneGroupOut
 
-import mlgut.stability as stab
 from mlgut import utils
-from mlgut.datasets import get_path
 from mlgut.models import (
     compute_rbo_mat,
     compute_support_ebm,
     get_cp_support,
     get_lopo_support,
 )
+from mlgut.pystab import nogueria_test
 
 EXTENSIONS = ["pdf", "png", "svg"]
 
@@ -79,9 +77,9 @@ def compute_stability(results, alpha=0.05):
     ]
     support_matrix = np.array(support_matrix)
 
-    stab_res = stab.confidenceIntervals(support_matrix, alpha=alpha)
-    stability = stab_res["stability"]
-    stability_error = stab_res["stability"] - stab_res["lower"]
+    stab_res = nogueria_test(support_matrix, alpha=alpha)
+    stability = stab_res.estimator
+    stability_error = stab_res.error
 
     return support_matrix, stability, stability_error
 

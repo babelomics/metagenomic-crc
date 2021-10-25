@@ -10,7 +10,6 @@ from typing import Tuple
 
 import joblib
 import pandas as pd
-from interpret.glassbox import ExplainableBoostingClassifier
 from sklearn.base import clone
 from sklearn.model_selection import (
     LeaveOneGroupOut,

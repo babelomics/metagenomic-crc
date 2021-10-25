@@ -5,39 +5,38 @@ email: carlos.loucera@juntadeandalucia.es
 
 ML models module.
 """
+import pathlib
+from typing import Tuple
+
 import numpy as np
 import pandas as pd
 from interpret.glassbox import ExplainableBoostingClassifier
-from scipy.spatial.distance import pdist
-from sklearn import metrics
 from sklearn.feature_selection import SelectFdr, SelectFpr
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, KBinsDiscretizer
 
-from mlgut.rbo import rbo_dict
-
-N_CPU = 24
+N_ESTIMATORS = 24
 
 
 def get_model(profile: str, selector=True, lopo=False) -> Pipeline:
-    """[summary]
+    """Get an unfitted estimator as a sklearn pipeline for each metagenomic profile.
 
     Parameters
     ----------
     profile : str
-        [description]
+        Metagenomics profile name (one of OGs: eggNog, KEGG_KOs: kegg, centrifuge: taxo)
     selector : bool, optional
-        [description], by default True
+        Use FS as a layer, by default True
 
     Returns
     -------
     Pipeline
-        [description]
+        Estimator as a reproduble pipeline
 
     Raises
     ------
     NotImplementedError
-        [description]
+        Profile not included yet
     """
     if profile.lower() in ["taxo", "taxonomic", "centrifuge"]:
         model = get_taxonomic_model(selector, lopo)
@@ -52,17 +51,17 @@ def get_model(profile: str, selector=True, lopo=False) -> Pipeline:
 
 
 def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
-    """[summary]
+    """Get an unfitted estimator as a sklearn pipeline for taxonomic profile.
 
     Parameters
     ----------
     selector : bool, optional
-        [description], by default True
+        Use FS as a layer, by default True
 
     Returns
     -------
     Pipeline
-        [description]
+        Estimator as a reproduble pipeline
     """
     if selector:
         model = Pipeline(
@@ -73,7 +72,7 @@ def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=N_CPU, n_jobs=-1, random_state=42
+                        n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -88,7 +87,7 @@ def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
                     (
                         "estimator",
                         ExplainableBoostingClassifier(
-                            n_estimators=N_CPU, n_jobs=-1, random_state=42
+                            n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                         ),
                     ),
                 ]
@@ -102,7 +101,7 @@ def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=N_CPU, n_jobs=-1, random_state=42
+                        n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -112,17 +111,17 @@ def get_taxonomic_model(selector=True, lopo=False) -> Pipeline:
 
 
 def get_kegg_model(selector=True, lopo=False) -> Pipeline:
-    """[summary]
+    """Get an unfitted estimator as a sklearn pipeline for KEGG KO profile.
 
     Parameters
     ----------
     selector : bool, optional
-        [description], by default True
+        Use FS as a layer, by default True
 
     Returns
     -------
     Pipeline
-        [description]
+        Estimator as a reproduble pipeline
     """
     if selector:
         model = Pipeline(
@@ -133,7 +132,7 @@ def get_kegg_model(selector=True, lopo=False) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=N_CPU, n_jobs=-1, random_state=42
+                        n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -148,7 +147,7 @@ def get_kegg_model(selector=True, lopo=False) -> Pipeline:
                     (
                         "estimator",
                         ExplainableBoostingClassifier(
-                            n_estimators=N_CPU, n_jobs=-1, random_state=42
+                            n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                         ),
                     ),
                 ]
@@ -162,7 +161,7 @@ def get_kegg_model(selector=True, lopo=False) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=N_CPU, n_jobs=-1, random_state=42
+                        n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -172,17 +171,17 @@ def get_kegg_model(selector=True, lopo=False) -> Pipeline:
 
 
 def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
-    """[summary]
+    """Get an unfitted estimator as a sklearn pipeline for eggNog profile.
 
     Parameters
     ----------
     selector : bool, optional
-        [description], by default True
+        Use FS as a layer, by default True
 
     Returns
     -------
     Pipeline
-        [description]
+        Estimator as a reproduble pipeline
     """
     if selector:
         model = Pipeline(
@@ -193,7 +192,7 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=N_CPU, n_jobs=-1, random_state=42
+                        n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -208,7 +207,7 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
                     (
                         "estimator",
                         ExplainableBoostingClassifier(
-                            n_estimators=N_CPU, n_jobs=-1, random_state=42
+                            n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                         ),
                     ),
                 ]
@@ -222,7 +221,7 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
                 (
                     "estimator",
                     ExplainableBoostingClassifier(
-                        n_estimators=N_CPU, n_jobs=-1, random_state=42
+                        n_estimators=N_ESTIMATORS, n_jobs=-1, random_state=42
                     ),
                 ),
             ]
@@ -231,39 +230,19 @@ def get_ogs_model(selector=True, lopo=False, k=20) -> Pipeline:
     return model
 
 
-# def compute_rbo_mat(rank_mat_filt, p=0.999, filt=True):
-#     if filt:
-#         # safe filter to speed up the computation
-#         rank_mat_filt = rank_mat_filt.loc[rank_mat_filt.any(axis=1), :]
+def compute_support_ebm(model: Pipeline) -> Tuple[np.ndarray, np.ndarray]:
+    """Get the learned relevances.
 
-#     col_dict_list = np.array(
-#         [rank_mat_filt[col].to_dict() for col in rank_mat_filt.columns]
-#     ).reshape(-1, 1)
-#     distmat = pdist(col_dict_list, lambda x, y: 1 - rbo_dict(x[0], y[0], p=p)[-1])
+    Parameters
+    ----------
+    model : Pipeline
+        Fitted estimator.
 
-#     return distmat
-
-
-def rbo_dist(x, y, p=0.999):
-    x_dict = pd.Series(x).to_dict()
-    y_dict = pd.Series(y).to_dict()
-
-    return 1 - rbo_dict(x_dict, y_dict, p=p)[-1]
-
-
-def compute_rbo_mat(rank_mat, p=0.999, filt=True):
-    if filt:
-        # safe filter to speed up the computation
-        rank_mat_filt = rank_mat.loc[rank_mat.any(axis=1), :]
-    else:
-        rank_mat_filt = rank_mat
-
-    dmat = metrics.pairwise_distances(X=rank_mat_filt, n_jobs=-1, metric=rbo_dist, p=p)
-
-    return dmat
-
-
-def compute_support_ebm(model: Pipeline, quantile=None):
+    Returns
+    -------
+    ndarray (n_features, ), ndarray (n_features, )
+        Support and relevances learned.
+    """
     # TODO: check if trained
     ebm = model["estimator"]
     ebm_global = ebm.explain_global()
@@ -283,6 +262,21 @@ def compute_support_ebm(model: Pipeline, quantile=None):
 
 
 def get_lopo_support(cv_results, columns):
+    """Extract the support learned across the LOPO analysis for a given profile.
+
+    Parameters
+    ----------
+    cv_results : sklearn CV object
+        The model evaluated across the LOPO
+    columns : list like (n_features, )
+        Feature names.
+    
+    Returns
+    -------
+    DataFrame (n_features, n_projects)
+        Support for the combined projects. So project_i means features learned using all
+        projects except i.
+    """
 
     support = [
         pd.Series(compute_support_ebm(est)[1], index=columns)
@@ -293,6 +287,20 @@ def get_lopo_support(cv_results, columns):
 
 
 def get_cp_support(results, columns):
+    """Combine the learned support for the cross project analysis (for a given profile).
+
+    Parameters
+    ----------
+    results : ndarray (n_features, )
+        Support learned for one project.
+    columns : list like[str] (n_features, )
+        Feature names.
+
+    Returns
+    -------
+    DataFrame (n_features, n_projects)
+        Frame with the support learned for each project
+    """
 
     support = [
         pd.Series(
@@ -306,7 +314,19 @@ def get_cp_support(results, columns):
     return combine_support(support)
 
 
-def combine_support(support):
+def combine_support(support: list):
+    """Build the final signature from the learned relevances across the projects.
+
+    Parameters
+    ----------
+    support : list like
+        A list containing the different supports learned.
+
+    Returns
+    -------
+    DataFrame (n_features, n_projects), DataFrame (n_features, )
+        The learned support (raw) and the combined signature.
+    """
     support = pd.concat(support, axis=1)
     n_projects = support.shape[1]
     cross_dataset_support = n_projects - (support != 0.0).sum(axis=1) + 1
@@ -318,86 +338,43 @@ def combine_support(support):
     return support, support_merged
 
 
-# class ItemSelector(BaseEstimator, TransformerMixin):
-#     """For data grouped by feature, select subset of data at a provided key.
+def extract_support_from_signature(support_frame: pd.DataFrame) -> np.ndarray:
+    """Given a profile siganture, extract the support.
 
-#     The data is expected to be stored in a 2D data structure, where the first
-#     index is over features and the second is over samples.  i.e.
+    Parameters
+    ----------
+    support_frame : pd.DataFrame (n_features, )
+        The model relevances.
 
-#     >> len(data[key]) == n_samples
-
-#     Please note that this is the opposite convention to scikit-learn feature
-#     matrixes (where the first index corresponds to sample).
-
-#     ItemSelector only requires that the collection implement getitem
-#     (data[key]).  Examples include: a dict of lists, 2D numpy array, Pandas
-#     DataFrame, numpy record array, etc.
-
-#     >> data = {'a': [1, 5, 2, 5, 2, 8],
-#                'b': [9, 4, 1, 4, 1, 3]}
-#     >> ds = ItemSelector(key='a')
-#     >> data['a'] == ds.transform(data)
-
-#     ItemSelector is not designed to handle data grouped by sample.  (e.g. a
-#     list of dicts).  If your data is structured this way, consider a
-#     transformer along the lines of `sklearn.feature_extraction.DictVectorizer`.
-
-#     Parameters
-#     ----------
-#     key : hashable, required
-#         The key corresponding to the desired value in a mappable.
-#     """
-
-#     def __init__(self, key):
-#         self.key = key
-
-#     def fit(self, x, y=None):
-#         return self
-
-#     def transform(self, data_dict):
-#         return data_dict[self.key]
+    Returns
+    -------
+    np.ndarray (n_features_used, )
+        Support as feature names.
+    """
+    return support_frame[support_frame > 0.0].index.astype(str)
 
 
-# def get_combined_model(profile_list):
+def extract_support_from_signature_path(condition, profile_name, folder_path):
+    """Load a signature stored with a support-based function and extract the support.
 
-#     transformer_list = [
-#         ("name", Pipeline([("selector", ItemSelector(key=name))]))
-#         for name in profile_list
-#     ]
+    Parameters
+    ----------
+    condition : str like
+        Disease code name.
+    profile_name : str like
+        Metagenomics profile name.
+    folder_path : str like
+        Folder where the signature was dumped.
 
-#     transformer_list = []
+    Returns
+    -------
+    array like, (n_features_used, )
+        Feature names used.
+    """
+    folder_path = pathlib.Path(folder_path)
+    best_path = folder_path.joinpath(f"{condition}_{profile_name}_cp_support_merge.tsv")
 
-#     for name in profile_list:
-#         if name.lower() == "centrifuge":
-#             pipe = (
-#                 "name",
-#                 Pipeline(
-#                     [
-#                         ("item", ItemSelector(key=name)),
-#                         ("disretizer", KBinsDiscretizer(n_bins=4, encode="ordinal")),
-#                         ("selector", SelectFpr()),
-#                     ]
-#                 ),
-#             )
+    support_frame = pd.read_csv(best_path, sep="\t", index_col=0).iloc[:, 0]
+    columns = extract_support_from_signature(support_frame)
 
-#             transformer_list.append(pipe)
-
-#     model = Pipeline(
-#         [
-#             # Use FeatureUnion to combine the features from kegg and aro
-#             ("union", FeatureUnion(transformer_list)),
-#             # component-wise transformation
-#             ("transformer", QuantileTransformer(random_state=42)),
-#             (
-#                 "pca",
-#                 decomposition.KernelPCA(
-#                     kernel="linear", n_components=100, random_state=42
-#                 ),
-#             ),
-#             #     ('gp', gpf)
-#             #     # Use a Linear SVM classifier on the combined features
-#             ("svm", SVC(kernel="linear", probability=True, random_state=42)),
-#         ]
-#     )
-
-#     return model
+    return columns
